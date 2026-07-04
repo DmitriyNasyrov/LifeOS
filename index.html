@@ -424,7 +424,17 @@ async function sendMsg(text) {
       const c = raw.replace(/```json|```/g, "").trim();
       const s = c.indexOf("{"), e = c.lastIndexOf("}");
       parsed = JSON.parse(s >= 0 && e > s ? c.slice(s, e+1) : c);
-    } catch { parsed = { reply: raw || "Не удалось разобрать ответ, попробуйте ещё раз.", actions: [] }; }
+    } catch {
+      // Ответ оборван/повреждён: вытаскиваем человеческий текст, сырой код не показываем никогда
+      const m = raw.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/);
+      const salvaged = m ? m[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').trim() : "";
+      parsed = {
+        reply: salvaged
+          ? salvaged + "\n\n⚠️ Ответ оборвался, действия могли не выполниться — повторите запрос."
+          : "Ответ пришёл повреждённым. Повторите запрос — или, если это повторяется, смените модель в настройках на обычную (не thinking).",
+        actions: [],
+      };
+    }
     const chips = await applyActions(parsed.actions);
     S.chat.push({ role:"ai", text: parsed.reply || "Готово.", chips });
   } catch (e) {
