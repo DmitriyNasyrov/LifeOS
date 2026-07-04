@@ -215,6 +215,23 @@ input, select, textarea { font-family: inherit; }
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 1; pointer-events: none; }
 .now-line::before { content: ""; position: absolute; left: -1px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
 
+/* Лента дней недели (мобильный режим «Неделя», как в Apple Calendar) */
+.wstrip { display: flex; gap: 2px; background: var(--card); border-radius: 16px; padding: 8px 6px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+.wchip { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 5px; border-radius: 12px; cursor: pointer; }
+.wchip .wd { font-size: 10.5px; color: var(--text2); font-weight: 700; }
+.wchip .dn { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15.5px; transition: background .15s; }
+.wchip.sel .dn { background: var(--text); color: var(--bg); }
+.wchip.today .dn { background: var(--danger); color: #fff; }
+.wchip .dots { height: 5px; margin-top: 0; }
+.dots i.tk { background: var(--orange); }
+.tcount { font-size: 10px; color: var(--orange); font-weight: 700; margin-top: 2px; }
+.mini-task { display: flex; gap: 11px; align-items: center; padding: 7px 0; border-bottom: .5px solid var(--sep); }
+.mini-task:last-child { border-bottom: none; }
+.mini-task .checkbox { width: 22px; height: 22px; margin-top: 0; }
+.mini-task .mt { flex: 1; font-size: 14.5px; font-weight: 600; cursor: pointer; }
+.mini-task.done .mt { text-decoration: line-through; color: var(--text2); font-weight: 500; }
+.mini-task .mp { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
 /* ---------- Задачи ---------- */
 .task-row { display: flex; align-items: flex-start; gap: 13px; background: var(--card); border-radius: 16px; padding: 14px 15px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
 .checkbox { width: 24px; height: 24px; border-radius: 50%; border: 1.8px solid var(--text3); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; color: #fff; margin-top: 1px; transition: all .2s; }
@@ -565,6 +582,7 @@ function checkReminders() {
   }
 }
 setInterval(checkReminders, 45000);
+matchMedia("(min-width: 900px)").addEventListener("change", () => render());
 
 /* ====== Отрисовка ====== */
 const app = $("#app");
@@ -597,11 +615,11 @@ function render() {
     ${S.modal ? renderModal() : ""}`;
   bindMain();
   if (S.view === "chat") { const c = $("#content"); c.scrollTop = c.scrollHeight; }
-  if (S.view === "calendar" && (S.calMode === "week" || S.calMode === "day")) {
+  if (S.view === "calendar" && S.calMode === "week") {
     const sc = $(".tg-scroll");
     if (sc) {
       sc.scrollTop = Math.max(0, (new Date().getHours()-8)*52);
-      if (S.calMode === "week") {
+      if (isDesktop()) {
         const idx = Math.floor((parseDate(fmtDate(new Date())) - S.weekStart) / 864e5);
         if (idx >= 0 && idx < 7) sc.scrollLeft = Math.max(0, idx * 104 - 30);
       }
@@ -717,14 +735,31 @@ function viewChat() {
 
 /* --- Календарь --- */
 function viewCalendar() {
+  if (S.calMode === "day") S.calMode = "week";
   const seg = `<div class="seg">
-    <button data-mode="day" class="${S.calMode==="day"?"on":""}">День</button>
     <button data-mode="week" class="${S.calMode==="week"?"on":""}">Неделя</button>
     <button data-mode="month" class="${S.calMode==="month"?"on":""}">Месяц</button>
   </div>`;
   if (S.calMode === "month") return calMonthView(seg);
-  if (S.calMode === "day") return calDayView(seg);
   return calWeekView(seg);
+}
+
+const isDesktop = () => matchMedia("(min-width: 900px)").matches;
+
+/* Задачи, привязанные к дню, — карточка со встроенными чекбоксами */
+function dayTasksHtml(k) {
+  const ts = S.tasks.filter((t) => t.due_date === k);
+  if (!ts.length) return "";
+  ts.sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1));
+  return `<div class="card" style="padding:12px 16px;margin-bottom:10px">
+    <h3 style="margin-bottom:4px">Задачи на этот день</h3>
+    ${ts.map((t) => `
+      <div class="mini-task ${t.done ? "done" : ""}">
+        <div class="checkbox ${t.done ? "on" : ""}" data-task="${t.id}">${t.done ? IC.tick : ""}</div>
+        <div class="mt" data-edittask="${t.id}">${esc(t.title)}</div>
+        <div class="mp" style="background:${prioColor[t.priority] || "#8E8E93"}"></div>
+      </div>`).join("")}
+  </div>`;
 }
 
 function calMonthView(seg) {
@@ -733,12 +768,16 @@ function calMonthView(seg) {
   const start = new Date(S.calMonth.y, S.calMonth.m, 1 - ((first.getDay()+6)%7));
   const byDate = {};
   for (const e of S.events) (byDate[e.date] = byDate[e.date] || []).push(e);
+  const tByDate = {};
+  for (const t of S.tasks) if (t.due_date && !t.done) tByDate[t.due_date] = (tByDate[t.due_date] || 0) + 1;
   let cells = "";
   for (let i=0;i<42;i++){
     const d = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
-    const k = fmtDate(d); const cnt = (byDate[k]||[]).length;
+    const k = fmtDate(d);
+    const cnt = Math.min((byDate[k]||[]).length, 3);
+    const tcnt = Math.min(tByDate[k] || 0, 4 - cnt);
     cells += `<div class="cal-cell ${d.getMonth()===S.calMonth.m?"":"out"} ${k===today?"today":""} ${k===S.selectedDay?"sel":""}" data-day="${k}">
-      <div class="num">${d.getDate()}</div><div class="dots">${"<i></i>".repeat(Math.min(cnt,3))}</div></div>`;
+      <div class="num">${d.getDate()}</div><div class="dots">${"<i></i>".repeat(cnt)}${'<i class="tk"></i>'.repeat(Math.max(0,tcnt))}</div></div>`;
   }
   const dayEv = (byDate[S.selectedDay]||[]).sort((a,b) => (a.time||"99")<(b.time||"99")?-1:1);
   const sd = parseDate(S.selectedDay);
@@ -754,6 +793,7 @@ function calMonthView(seg) {
     </div>
     <div class="day-panel">
       <h3>${humanDate(S.selectedDay)}${humanDate(S.selectedDay).length<8 ? `, ${sd.getDate()} ${MONTHS_GEN[sd.getMonth()]}` : ""}</h3>
+      ${dayTasksHtml(S.selectedDay)}
       ${dayEv.length ? dayEv.map((e) => `
         <div class="ev-row" data-ev="${e.id}"><div class="bar"></div><div style="flex:1">
           <div class="t">${esc(e.title)}</div>
@@ -770,7 +810,8 @@ function timeGrid(days, mode) {
   let head = `<div class="tg-head tcorner"></div>`;
   for (const d of days) {
     const k = fmtDate(d);
-    head += `<div class="tg-head ${k===today?"today":""}">${WD[(d.getDay()+6)%7]}<span class="dnum">${d.getDate()}</span></div>`;
+    const tn = S.tasks.filter((t) => t.due_date === k && !t.done).length;
+    head += `<div class="tg-head ${k===today?"today":""}">${WD[(d.getDay()+6)%7]}<span class="dnum">${d.getDate()}</span>${mode==="week" && tn ? `<div class="tcount">${tn} задач${tn===1?"а":tn<5?"и":""}</div>` : ""}</div>`;
   }
   let hourCol = `<div class="tcol">`;
   for (let h=H0;h<=H1;h++) hourCol += `<div class="hour-lbl" style="height:${PX}px">${pad(h)}:00</div>`;
@@ -796,7 +837,7 @@ function timeGrid(days, mode) {
   const allDay = S.events.filter((e) => !e.time && days.some((d)=>fmtDate(d)===e.date));
   return `
     ${allDay.length ? `<div class="card" style="padding:12px 16px;margin-bottom:10px"><h3 style="margin-bottom:6px">Весь день</h3>${allDay.map((e)=>`<div data-ev="${e.id}" style="font-size:14.5px;font-weight:500;padding:4px 0;cursor:pointer">📌 ${esc(e.title)} — ${humanDate(e.date)}</div>`).join("")}</div>` : ""}
-    <div class="tg-scroll" style="max-height:calc(100dvh - 300px)">
+    <div class="tg-scroll" style="max-height:calc(100dvh - ${mode==="week" ? "300" : "360"}px)">
       <div class="tg ${mode}">
         ${head}
         ${hourCol}${cols}
@@ -804,30 +845,57 @@ function timeGrid(days, mode) {
     </div>`;
 }
 
-function calWeekView(seg) {
+function weekDays() {
   const days = [];
   for (let i=0;i<7;i++) days.push(new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+i));
-  const last = days[6];
-  const rangeTitle = `${days[0].getDate()} ${MONTHS_GEN[days[0].getMonth()]} — ${last.getDate()} ${MONTHS_GEN[last.getMonth()]}`;
-  return `
-    <div class="cal-head">
-      <div class="cal-title">${rangeTitle}</div>
-      ${seg}
-      <div class="cal-nav"><button data-week="-1">‹</button><button class="today-btn" data-week="0">Сегодня</button><button data-week="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>
-    </div>
-    ${timeGrid(days, "week")}`;
+  return days;
 }
 
-function calDayView(seg) {
-  const d = parseDate(S.selectedDay);
-  const title = `${WD_FULL[d.getDay()][0].toUpperCase()+WD_FULL[d.getDay()].slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
+function calWeekView(seg) {
+  const days = weekDays();
+  const today = fmtDate(new Date());
+  // выбранный день всегда внутри показанной недели
+  if (S.selectedDay < fmtDate(days[0]) || S.selectedDay > fmtDate(days[6])) {
+    S.selectedDay = (today >= fmtDate(days[0]) && today <= fmtDate(days[6])) ? today : fmtDate(days[0]);
+  }
+  const last = days[6];
+  const nav = `<div class="cal-nav"><button data-week="-1">‹</button><button class="today-btn" data-week="0">Сегодня</button><button data-week="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>`;
+
+  if (isDesktop()) {
+    const rangeTitle = `${days[0].getDate()} ${MONTHS_GEN[days[0].getMonth()]} — ${last.getDate()} ${MONTHS_GEN[last.getMonth()]}`;
+    return `
+      <div class="cal-head"><div class="cal-title">${rangeTitle}</div>${seg}${nav}</div>
+      ${timeGrid(days, "week")}`;
+  }
+
+  // Мобильный режим: лента дней недели + один день крупно (паттерн Apple Calendar)
+  const byDate = {}; for (const e of S.events) (byDate[e.date] = byDate[e.date] || []).push(e);
+  const tByDate = {}; for (const t of S.tasks) if (t.due_date && !t.done) tByDate[t.due_date] = (tByDate[t.due_date] || 0) + 1;
+  const strip = `<div class="wstrip">` + days.map((d) => {
+    const k = fmtDate(d);
+    const ec = Math.min((byDate[k]||[]).length, 2);
+    const tc = Math.min(tByDate[k]||0, 3-ec);
+    return `<div class="wchip ${k===S.selectedDay?"sel":""} ${k===today?"today":""}" data-day="${k}">
+      <div class="wd">${WD[(d.getDay()+6)%7]}</div><div class="dn">${d.getDate()}</div>
+      <div class="dots">${"<i></i>".repeat(ec)}${'<i class="tk"></i>'.repeat(Math.max(0,tc))}</div>
+    </div>`;
+  }).join("") + `</div>`;
+  const sd = parseDate(S.selectedDay);
+  const dayTitle = `${WD_FULL[sd.getDay()][0].toUpperCase()+WD_FULL[sd.getDay()].slice(1)}, ${sd.getDate()} ${MONTHS_GEN[sd.getMonth()]}`;
   return `
-    <div class="cal-head">
-      <div class="cal-title">${title}</div>
-      ${seg}
-      <div class="cal-nav"><button data-dnav="-1">‹</button><button class="today-btn" data-dnav="0">Сегодня</button><button data-dnav="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>
-    </div>
-    ${timeGrid([d], "day")}`;
+    <div class="cal-head"><div class="cal-title">${dayTitle}</div>${seg}${nav}</div>
+    ${strip}
+    ${dayTasksHtml(S.selectedDay)}
+    ${timeGrid([sd], "day")}`;
+}
+
+function shiftDay(v) {
+  const d = parseDate(S.selectedDay);
+  d.setDate(d.getDate() + v);
+  S.selectedDay = fmtDate(d);
+  const ws = fmtDate(S.weekStart), we = fmtDate(weekDays()[6]);
+  if (S.selectedDay < ws || S.selectedDay > we) S.weekStart = mondayOf(d);
+  render();
 }
 
 /* --- Задачи --- */
@@ -1014,16 +1082,23 @@ function bindMain() {
   }));
   $$("[data-week]").forEach((b)=>(b.onclick=()=>{
     const v = +b.dataset.week;
-    if (v===0) S.weekStart = mondayOf(new Date());
-    else S.weekStart = new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+v*7);
+    if (v===0) { S.weekStart = mondayOf(new Date()); S.selectedDay = fmtDate(new Date()); }
+    else {
+      S.weekStart = new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+v*7);
+      const d = parseDate(S.selectedDay); d.setDate(d.getDate()+v*7); S.selectedDay = fmtDate(d);
+    }
     render();
   }));
-  $$("[data-dnav]").forEach((b)=>(b.onclick=()=>{
-    const v = +b.dataset.dnav;
-    if (v===0) S.selectedDay = fmtDate(new Date());
-    else { const d = parseDate(S.selectedDay); d.setDate(d.getDate()+v); S.selectedDay = fmtDate(d); }
-    render();
-  }));
+  // Свайп влево/вправо по сетке дня = следующий/предыдущий день (мобильная «Неделя»)
+  const tgs = $(".tg-scroll");
+  if (tgs && S.view==="calendar" && S.calMode==="week" && !isDesktop()) {
+    let sx=0, sy=0;
+    tgs.addEventListener("touchstart",(e)=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+    tgs.addEventListener("touchend",(e)=>{
+      const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+      if (Math.abs(dx)>60 && Math.abs(dy)<50) shiftDay(dx<0?1:-1);
+    },{passive:true});
+  }
   $$("[data-day]").forEach((c)=>(c.onclick=()=>{ S.selectedDay=c.dataset.day; render(); }));
   $$("[data-ev]").forEach((el)=>(el.onclick=()=>{
     const ev = S.events.find((x)=>x.id===el.dataset.ev);
