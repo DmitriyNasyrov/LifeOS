@@ -544,15 +544,63 @@ function toggleMic() {
   recognizer.start();
 }
 
-/* ====== Напоминания ====== */
+/* ====== Push-уведомления (работают при закрытом приложении) ====== */
+const VAPID_PUBLIC = "BLguOC_uWIfXcM4Sm-waMHCb9jcCynV4hn0u6GBZJAt9OS2ZTSXBImxW7ByCgHk0FEADp-6ZLcmYETwPhn9r0ls";
+function urlB64(s) {
+  const pad = "=".repeat((4 - (s.length % 4)) % 4);
+  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64); const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+async function enablePush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !location.protocol.startsWith("http")) {
+    alert("Push недоступны: откройте сайт по вашей ссылке GitHub Pages.");
+    return false;
+  }
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) && !standalone) {
+    alert("На iPhone push работают только из установленного приложения: Поделиться → «На экран Домой», затем включите уведомления уже внутри LifeOS с рабочего стола.");
+    return false;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(VAPID_PUBLIC) });
+    const j = sub.toJSON();
+    const { error } = await sb.from("push_subscriptions").upsert({
+      endpoint: sub.endpoint,
+      user_id: S.session.user.id,
+      p256dh: j.keys.p256dh,
+      auth: j.keys.auth,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Moscow",
+    }, { onConflict: "endpoint" });
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    alert("Не удалось включить push: " + (e?.message || e));
+    return false;
+  }
+}
+async function disablePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+      await sub.unsubscribe();
+    }
+  } catch {}
+}
 async function toggleNotif(on) {
   if (on) {
-    if (!("Notification" in window)) { alert("Уведомления не поддерживаются этим браузером."); return; }
-    const p = await Notification.requestPermission();
-    if (p !== "granted") { S.notifOn = false; localStorage.setItem("lifeos-notif","0"); render(); return; }
-    S.notifOn = true; localStorage.setItem("lifeos-notif","1");
-    notify("LifeOS", "Напоминания включены. Предупрежу за 10 минут до события.");
+    const okRes = await enablePush();
+    S.notifOn = okRes;
+    localStorage.setItem("lifeos-notif", okRes ? "1" : "0");
+    if (okRes) notify("LifeOS", "Push включены: напоминания за 10 минут и утренняя сводка в 8:00 — даже когда приложение закрыто.");
   } else {
+    await disablePush();
     S.notifOn = false; localStorage.setItem("lifeos-notif","0");
   }
   render();
@@ -568,7 +616,8 @@ function notify(title, body, tag) {
 }
 const notified = new Set(JSON.parse(localStorage.getItem("lifeos-notified") || "[]"));
 function checkReminders() {
-  if (!S.notifOn || !S.session) return;
+  // Локальный дублёр: работает, только если серверные push выключены
+  if (S.notifOn || !S.session || Notification.permission !== "granted") return;
   const n = new Date(); const today = fmtDate(n);
   for (const e of S.events) {
     if (e.date !== today || !e.time || notified.has(e.id)) continue;
@@ -709,7 +758,7 @@ function viewDash() {
     </div>
     <div class="card">
       <div class="notif-row">
-        <div><div class="txt">Напоминания о событиях</div><div class="st">За 10 минут, пока LifeOS открыт</div></div>
+        <div><div class="txt">Push-уведомления</div><div class="st">Напоминания за 10 мин и сводка в 8:00 — даже когда LifeOS закрыт</div></div>
         <label class="switch"><input type="checkbox" id="notif" ${S.notifOn?"checked":""}><span class="knob"></span></label>
       </div>
     </div>
