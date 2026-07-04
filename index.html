@@ -15,37 +15,37 @@
 <style>
 :root {
   --bg: #F2F2F7; --card: #FFFFFF; --card2: rgba(255,255,255,.72);
-  --text: #1C1C1E; --text2: #8A8A8E; --text3: #AEAEB2;
-  --sep: rgba(60,60,67,.1); --sep2: rgba(60,60,67,.16);
+  --text: #1C1C1E; --text2: #8A8A8E; --text3: #C5C5C7;
+  --sep: rgba(60,60,67,.08); --sep2: rgba(60,60,67,.16);
   --accent: #0A84FF; --accent-grad: linear-gradient(180deg,#2E9BFF,#0A84FF);
   --danger: #FF3B30; --green: #34C759; --orange: #FF9500;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
   --blur-bg: rgba(242,242,247,.82);
-  --bubble-ai: #FFFFFF; --fill: rgba(120,120,128,.12); --fill2: rgba(120,120,128,.2);
+  --bubble-ai: #FFFFFF; --fill: rgba(120,120,128,.1); --fill2: rgba(120,120,128,.2);
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000000; --card: #1C1C1E; --card2: rgba(28,28,30,.72);
-    --text: #FFFFFF; --text2: #98989F; --text3: #636366;
-    --sep: rgba(84,84,88,.4); --sep2: rgba(84,84,88,.65);
+    --text: #FFFFFF; --text2: #98989F; --text3: #48484A;
+    --sep: rgba(84,84,88,.35); --sep2: rgba(84,84,88,.65);
     --shadow: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
     --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
     --blur-bg: rgba(10,10,10,.8);
-    --bubble-ai: #262628; --fill: rgba(120,120,128,.24); --fill2: rgba(120,120,128,.34);
+    --bubble-ai: #262628; --fill: rgba(120,120,128,.22); --fill2: rgba(120,120,128,.34);
   }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-  background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
+  background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overscroll-behavior: none;
 }
-button { font-family: inherit; cursor: pointer; color: var(--text); transition: transform .12s ease, opacity .12s ease; }
+button { font-family: inherit; cursor: pointer; color: var(--text); transition: transform .12s ease, opacity .12s ease; border: none; background: none; }
 button:active { transform: scale(.96); }
-input, textarea { font-family: inherit; }
-::selection { background: rgba(10,132,255,.25); }
+input, select, textarea { font-family: inherit; }
+.nic { width: 22px; height: 22px; display: block; }
+.nic-sm { width: 18px; height: 18px; }
 
 /* ---------- Каркас ---------- */
 #app { height: 100dvh; display: flex; overflow: hidden; }
@@ -54,13 +54,13 @@ input, textarea { font-family: inherit; }
 .header {
   padding: calc(10px + env(safe-area-inset-top)) 20px 10px;
   background: var(--blur-bg); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border-bottom: .5px solid var(--sep); z-index: 6;
+  border-bottom: .5px solid var(--sep2); z-index: 6;
   display: flex; align-items: flex-end; justify-content: space-between;
 }
 .header h1 { font-size: 27px; font-weight: 800; letter-spacing: -.6px; }
 .header .sub { font-size: 13px; color: var(--text2); margin-top: 1px; font-weight: 500; }
-.hbtn { border: none; background: var(--fill); color: var(--text2); font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 20px; }
-.content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: calc(150px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+.hbtn { background: var(--fill); color: var(--text2); font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 20px; }
+.content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: calc(155px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
 .fade-in { animation: fadeUp .35s cubic-bezier(.2,.8,.2,1); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
@@ -77,7 +77,7 @@ input, textarea { font-family: inherit; }
 }
 .auth-card input:focus { box-shadow: 0 0 0 2px var(--accent) inset; }
 .btn-primary {
-  width: 100%; border: none; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 700;
+  width: 100%; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 700;
   background: var(--accent-grad); color: #fff; margin-top: 4px; box-shadow: 0 6px 16px rgba(10,132,255,.3);
 }
 .btn-primary:disabled { opacity: .5; }
@@ -90,7 +90,7 @@ input, textarea { font-family: inherit; }
 .bubble.user { background: var(--accent-grad); color: #fff; margin-left: auto; border-bottom-right-radius: 6px; box-shadow: 0 3px 10px rgba(10,132,255,.25); }
 .bubble.ai { background: var(--bubble-ai); border-bottom-left-radius: 6px; box-shadow: var(--shadow-sm); }
 .chip {
-  display: flex; align-items: center; gap: 9px; background: var(--card); border: .5px solid var(--sep);
+  display: flex; align-items: center; gap: 9px; background: var(--card); border: .5px solid var(--sep2);
   border-radius: 14px; padding: 9px 13px; font-size: 13.5px; font-weight: 500; margin-bottom: 6px; max-width: 82%;
   box-shadow: var(--shadow-sm); animation: fadeUp .3s;
 }
@@ -99,16 +99,16 @@ input, textarea { font-family: inherit; }
 .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
 @keyframes blink { 0%,60%,100%{opacity:.3} 30%{opacity:1} }
 .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.suggest button { border: .5px solid var(--sep); background: var(--card); border-radius: 18px; padding: 10px 15px; font-size: 14.5px; font-weight: 500; color: var(--accent); box-shadow: var(--shadow-sm); }
+.suggest button { border: .5px solid var(--sep2); background: var(--card); border-radius: 18px; padding: 10px 15px; font-size: 14.5px; font-weight: 500; color: var(--accent); box-shadow: var(--shadow-sm); }
 .inputbar {
-  position: absolute; bottom: calc(58px + env(safe-area-inset-bottom)); left: 0; right: 0; padding: 10px 14px;
+  position: absolute; bottom: calc(62px + env(safe-area-inset-bottom)); left: 0; right: 0; padding: 10px 14px;
   background: var(--blur-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; gap: 8px; align-items: center;
 }
 .inputbar input {
   flex: 1; border: none; border-radius: 22px; padding: 12px 18px; font-size: 16px;
   background: var(--card); color: var(--text); outline: none; box-shadow: var(--shadow-sm); min-width: 0;
 }
-.rbtn { width: 44px; height: 44px; border-radius: 50%; border: none; font-size: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.rbtn { width: 44px; height: 44px; border-radius: 50%; font-size: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .sendbtn { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,.3); }
 .sendbtn:disabled { opacity: .4; }
 .micbtn { background: var(--fill); color: var(--text2); }
@@ -122,7 +122,8 @@ input, textarea { font-family: inherit; }
 .card h3 { font-size: 12.5px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
 .stat-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .stat { flex: 1; background: var(--card); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); }
-.stat .ico { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 8px; color: #fff; }
+.stat .ico { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 9px; color: #fff; }
+.stat .ico svg { width: 17px; height: 17px; }
 .stat .num { font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
 .stat .lbl { font-size: 12px; color: var(--text2); margin-top: 1px; font-weight: 500; }
 .progress-track { height: 8px; background: var(--fill); border-radius: 4px; overflow: hidden; }
@@ -132,15 +133,23 @@ input, textarea { font-family: inherit; }
 .dash-ev .tm { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 48px; font-variant-numeric: tabular-nums; }
 .dash-ev .tt { font-size: 15.5px; font-weight: 600; }
 .dash-ev .loc { font-size: 13px; color: var(--text2); margin-top: 1px; }
+.rec-row { display: flex; gap: 11px; padding: 9px 0; border-bottom: .5px solid var(--sep); align-items: flex-start; font-size: 14.5px; line-height: 1.35; font-weight: 500; }
+.rec-row:last-child { border-bottom: none; padding-bottom: 2px; }
+.rec-row .ri { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; margin-top: -1px; }
+.rec-row .ri svg { width: 14px; height: 14px; }
 .plan-btn {
-  width: 100%; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 700;
+  width: 100%; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 700;
   background: var(--accent-grad); color: #fff; margin-top: 2px; box-shadow: 0 8px 20px rgba(10,132,255,.3);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .empty { color: var(--text2); font-size: 14.5px; padding: 12px 2px; }
 .empty-card { background: var(--card); border-radius: 16px; padding: 22px; text-align: center; color: var(--text2); font-size: 14.5px; box-shadow: var(--shadow-sm); }
 .notif-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.notif-row .txt { font-size: 14.5px; font-weight: 500; }
+.notif-row .txt { font-size: 14.5px; font-weight: 600; }
 .notif-row .st { font-size: 12.5px; color: var(--text2); margin-top: 1px; }
+.name-row { display: flex; gap: 8px; }
+.name-row input { flex: 1; border: none; border-radius: 12px; padding: 12px 14px; font-size: 15px; background: var(--fill); color: var(--text); outline: none; min-width: 0; }
+.name-row button { background: var(--accent); color: #fff; border-radius: 12px; padding: 0 16px; font-weight: 700; font-size: 14px; }
 
 /* ---------- Переключатель iOS ---------- */
 .switch { position: relative; width: 51px; height: 31px; flex-shrink: 0; }
@@ -150,22 +159,26 @@ input, textarea { font-family: inherit; }
 .switch input:checked + .knob { background: var(--green); }
 .switch input:checked + .knob::after { transform: translateX(20px); }
 
-/* ---------- Календарь ---------- */
+/* ---------- Календарь: шапка ---------- */
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
-.cal-title { font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
+.cal-title { font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
 .cal-title .yr { color: var(--danger); font-weight: 700; margin-left: 6px; }
 .cal-nav { display: flex; gap: 2px; align-items: center; }
-.cal-nav button { border: none; background: transparent; color: var(--danger); font-size: 24px; width: 38px; height: 38px; border-radius: 50%; }
+.cal-nav button { color: var(--danger); font-size: 24px; width: 38px; height: 38px; border-radius: 50%; }
 .cal-nav .today-btn { font-size: 14px; font-weight: 700; width: auto; padding: 0 12px; }
 .seg { display: flex; background: var(--fill); border-radius: 10px; padding: 2px; }
-.seg button { border: none; background: transparent; border-radius: 8px; padding: 6px 16px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+.seg button { border-radius: 8px; padding: 6px 13px; font-size: 13.5px; font-weight: 600; color: var(--text); }
 .seg button.on { background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.addbtn { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-grad); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(10,132,255,.3); flex-shrink: 0; }
+.addbtn svg { width: 18px; height: 18px; }
+
+/* ---------- Месяц ---------- */
 .cal-grid { background: var(--card); border-radius: 18px; padding: 12px 8px; box-shadow: var(--shadow); }
 .cal-wd { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
 .cal-wd div { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--text2); padding: 4px 0; }
 .cal-days { display: grid; grid-template-columns: repeat(7,1fr); }
 .cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; }
-.cal-cell .num { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 16px; font-weight: 500; transition: background .15s; }
+.cal-cell .num { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 16px; font-weight: 500; }
 .cal-cell.out .num { color: var(--text3); }
 .cal-cell.today .num { background: var(--danger); color: #fff; font-weight: 800; }
 .cal-cell.sel:not(.today) .num { background: var(--text); color: var(--bg); }
@@ -173,76 +186,106 @@ input, textarea { font-family: inherit; }
 .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .day-panel { margin-top: 16px; }
 .day-panel h3 { font-size: 17px; font-weight: 800; margin-bottom: 10px; letter-spacing: -.3px; }
-.ev-row { display: flex; gap: 12px; background: var(--card); border-radius: 16px; padding: 13px 15px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.ev-row { display: flex; gap: 12px; background: var(--card); border-radius: 16px; padding: 13px 15px; margin-bottom: 8px; box-shadow: var(--shadow-sm); cursor: pointer; }
 .ev-row .bar { width: 4px; border-radius: 2px; background: var(--accent-grad); flex-shrink: 0; }
 .ev-row .t { font-size: 15.5px; font-weight: 600; }
 .ev-row .m { font-size: 13px; color: var(--text2); margin-top: 2px; }
 
-/* Недельная сетка */
-.week-scroll { overflow: auto; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); }
-.week-inner { min-width: 680px; }
-.week-header { display: grid; grid-template-columns: 46px repeat(7,1fr); border-bottom: .5px solid var(--sep2); position: sticky; top: 0; background: var(--card); z-index: 2; }
-.week-header .wd { text-align: center; padding: 9px 2px 7px; font-size: 11.5px; color: var(--text2); font-weight: 700; }
-.week-header .wd .dnum { font-size: 17px; font-weight: 800; color: var(--text); display: block; width: 30px; height: 30px; line-height: 30px; margin: 3px auto 0; border-radius: 50%; }
-.week-header .wd.today .dnum { background: var(--danger); color: #fff; }
-.week-body { display: grid; grid-template-columns: 46px repeat(7,1fr); }
-.hour-lbl { height: 48px; font-size: 10.5px; color: var(--text3); text-align: right; padding-right: 7px; transform: translateY(-6px); font-variant-numeric: tabular-nums; }
+/* ---------- Сетка времени (День и Неделя) ---------- */
+.tg-scroll { overflow: auto; background: var(--card); border-radius: 18px; box-shadow: var(--shadow); position: relative; scroll-behavior: smooth; }
+.tg { display: grid; }
+.tg.week { grid-template-columns: 50px repeat(7, minmax(104px, 1fr)); min-width: 778px; }
+.tg.day { grid-template-columns: 50px 1fr; }
+.tg-head { position: sticky; top: 0; z-index: 3; background: var(--card); border-bottom: .5px solid var(--sep2); text-align: center; padding: 9px 2px 7px; font-size: 11.5px; color: var(--text2); font-weight: 700; }
+.tg-head.tcorner { position: sticky; left: 0; z-index: 4; }
+.tg-head .dnum { font-size: 17px; font-weight: 800; color: var(--text); display: block; width: 30px; height: 30px; line-height: 30px; margin: 3px auto 0; border-radius: 50%; }
+.tg-head.today .dnum { background: var(--danger); color: #fff; }
+.tcol { position: sticky; left: 0; z-index: 2; background: var(--card); border-right: .5px solid var(--sep2); }
+.hour-lbl { height: 52px; font-size: 10.5px; color: var(--text2); text-align: right; padding-right: 7px; transform: translateY(-6px); font-variant-numeric: tabular-nums; }
 .day-col { border-left: .5px solid var(--sep); position: relative; }
-.day-col.today { background: rgba(255,59,48,.05); }
-.hline { height: 48px; border-bottom: .5px solid var(--sep); }
+.day-col:first-of-type { border-left: none; }
+.day-col.today { background: rgba(10,132,255,.045); }
+.hline { height: 52px; border-bottom: .5px solid var(--sep); }
 .wev {
-  position: absolute; left: 2px; right: 3px; background: linear-gradient(180deg,#2E9BFF,#0A84FF); color: #fff; border-radius: 8px;
-  padding: 4px 7px; font-size: 11.5px; font-weight: 700; overflow: hidden; line-height: 1.25;
-  box-shadow: 0 2px 6px rgba(10,132,255,.35); min-height: 23px; border-left: 3px solid rgba(255,255,255,.5);
+  position: absolute; left: 3px; right: 4px; background: linear-gradient(180deg,#2E9BFF,#0A84FF); color: #fff; border-radius: 9px;
+  padding: 4px 8px; font-size: 12px; font-weight: 700; overflow: hidden; line-height: 1.3;
+  box-shadow: 0 2px 8px rgba(10,132,255,.3); min-height: 24px; cursor: pointer;
 }
 .wev .wt { font-weight: 500; opacity: .85; font-size: 10.5px; }
-.now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 1; }
-.now-line::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+.now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 1; pointer-events: none; }
+.now-line::before { content: ""; position: absolute; left: -1px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
 
 /* ---------- Задачи ---------- */
 .task-row { display: flex; align-items: flex-start; gap: 13px; background: var(--card); border-radius: 16px; padding: 14px 15px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
-.checkbox { width: 24px; height: 24px; border-radius: 50%; border: 1.8px solid var(--text3); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; font-size: 13px; color: #fff; margin-top: 1px; transition: all .2s; }
+.checkbox { width: 24px; height: 24px; border-radius: 50%; border: 1.8px solid var(--text3); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent; color: #fff; margin-top: 1px; transition: all .2s; }
+.checkbox svg { width: 13px; height: 13px; }
 .checkbox.on { background: var(--accent-grad); border-color: transparent; }
+.task-body { flex: 1; cursor: pointer; }
 .task-row .t { font-size: 15.5px; font-weight: 600; }
 .task-row.done .t { text-decoration: line-through; color: var(--text2); font-weight: 500; }
 .task-row .m { font-size: 12.5px; color: var(--text2); margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .pill { font-size: 11px; font-weight: 700; padding: 2.5px 9px; border-radius: 9px; color: #fff; }
 .overdue { color: var(--danger); font-weight: 700; }
 .section-label { font-size: 12.5px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin: 18px 6px 8px; }
+.list-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.new-btn { display: inline-flex; align-items: center; gap: 7px; background: var(--card); color: var(--accent); font-size: 14.5px; font-weight: 700; border-radius: 18px; padding: 10px 16px; box-shadow: var(--shadow-sm); }
+.new-btn svg { width: 16px; height: 16px; }
 
 /* ---------- Память ---------- */
 .mem-row { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border-radius: 16px; padding: 13px 15px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
 .mem-row .f { font-size: 15px; line-height: 1.4; font-weight: 500; }
 .mem-row .c { font-size: 11.5px; color: var(--text2); margin-top: 4px; }
-.forget { border: none; background: transparent; color: var(--danger); font-size: 13px; font-weight: 600; padding: 2px 4px; }
+.forget { color: var(--danger); font-size: 13px; font-weight: 600; padding: 2px 4px; }
+
+/* ---------- Шторка редактирования ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 60; display: flex; align-items: flex-end; justify-content: center; animation: fadein .2s; }
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+.sheet {
+  background: var(--bg); width: 100%; max-width: 560px; border-radius: 24px 24px 0 0;
+  padding: 20px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 90dvh; overflow-y: auto;
+  animation: slideUp .32s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes slideUp { from { transform: translateY(60px); opacity: .5 } to { transform: none; opacity: 1 } }
+.sheet h2 { font-size: 20px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 16px; }
+.frow { margin-bottom: 11px; }
+.frow label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text2); margin: 0 4px 6px; }
+.finput {
+  width: 100%; border: none; border-radius: 13px; padding: 13px 14px; font-size: 16px;
+  background: var(--card); color: var(--text); outline: none; box-shadow: var(--shadow-sm); appearance: none; min-height: 48px;
+}
+.finput:focus { box-shadow: 0 0 0 2px var(--accent) inset; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sheet-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; }
+.btn-danger { background: rgba(255,59,48,.12); color: var(--danger); font-weight: 700; border-radius: 14px; padding: 14px; font-size: 15.5px; }
+.btn-ghost { background: var(--fill); color: var(--text); font-weight: 600; border-radius: 14px; padding: 14px; font-size: 15.5px; }
 
 /* ---------- Табы ---------- */
 .tabbar {
   position: absolute; bottom: 0; left: 0; right: 0; display: flex;
   background: var(--blur-bg); backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6);
   border-top: .5px solid var(--sep2); z-index: 10;
-  height: calc(58px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+  height: calc(62px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
 }
-.tabbar button { flex: 1; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--text2); }
-.tabbar button .ic { font-size: 20px; line-height: 1; }
+.tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--text2); }
 .tabbar button.on { color: var(--accent); }
 
 /* ---------- Десктоп ---------- */
 @media (min-width: 900px) {
   .tabbar { display: none; }
   .sidebar {
-    display: flex; flex-direction: column; width: 230px; background: var(--card2);
-    backdrop-filter: blur(20px); border-right: .5px solid var(--sep); padding: 22px 12px; gap: 4px; flex-shrink: 0;
+    display: flex; flex-direction: column; width: 232px; background: var(--card2);
+    backdrop-filter: blur(20px); border-right: .5px solid var(--sep2); padding: 22px 12px; gap: 4px; flex-shrink: 0;
   }
   .sidebar .logo { font-size: 20px; font-weight: 800; letter-spacing: -.5px; padding: 4px 12px 20px; display: flex; align-items: center; gap: 9px; }
   .sidebar .logo img { width: 30px; height: 30px; border-radius: 8px; }
   .sidebar .logo em { font-style: normal; background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .sidebar button { display: flex; align-items: center; gap: 11px; border: none; background: transparent; padding: 11px 13px; border-radius: 11px; font-size: 14.5px; font-weight: 600; color: var(--text); text-align: left; }
-  .sidebar button.on { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,.3); }
-  .content { padding: 26px 34px 140px; max-width: 1000px; margin: 0 auto; width: 100%; }
-  .inputbar { bottom: 0; left: 230px; padding: 14px 34px calc(18px + env(safe-area-inset-bottom)); }
+  .sidebar > button { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 11px; font-size: 14.5px; font-weight: 600; color: var(--text); text-align: left; }
+  .sidebar > button.on { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,.3); }
+  .content { padding: 26px 34px 150px; max-width: 1020px; margin: 0 auto; width: 100%; }
+  .inputbar { bottom: 0; left: 232px; padding: 14px 34px calc(18px + env(safe-area-inset-bottom)); }
   .cal-cell .num { width: 37px; height: 37px; }
-  .stat-row { max-width: 580px; }
+  .stat-row { max-width: 600px; }
+  .tg.week { min-width: 0; }
 }
 </style>
 </head>
@@ -257,10 +300,24 @@ const SUPABASE_URL = "https://jevidzkmwkrajypzrrrn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_cBNjZfV4Or30dbgxOC_AUQ_I6zO4H-b";
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* PWA: service worker (только на http/https) */
 if (location.protocol.startsWith("http") && "serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js").catch(() => {});
 }
+
+/* ====== SVG-иконки (в стиле SF Symbols) ====== */
+const IC = {
+  sun: '<svg class="nic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>',
+  spark: '<svg class="nic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l1.9 6.4 6.5 3-6.5 3-1.9 6.4-1.9-6.4-6.5-3 6.5-3z"/></svg>',
+  cal: '<svg class="nic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3.2"/><path d="M3.5 9.8h17M8.2 2.8v3.4M15.8 2.8v3.4"/></svg>',
+  check: '<svg class="nic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M8.4 12.3l2.5 2.5 4.7-5.4"/></svg>',
+  chipIcon: '<svg class="nic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2.6"/><rect x="9.8" y="9.8" width="4.4" height="4.4" rx="1.2"/><path d="M9 2.8v2.4M15 2.8v2.4M9 18.8v2.4M15 18.8v2.4M2.8 9h2.4M2.8 15h2.4M18.8 9h2.4M18.8 15h2.4"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.5L4.5 13.5h5.6L11 21.5l8.5-11h-5.6z"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3 2.2"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 21V4.2c0 0 1.7-1.2 4.5-1.2s4 1.6 6.5 1.6c1.7 0 2.5-.6 2.5-.6v9.6c0 0-.8.6-2.5.6-2.5 0-3.7-1.6-6.5-1.6-2.8 0-4.5 1.2-4.5 1.2"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.5L2.8 19.5h18.4z" stroke-linejoin="round"/><path d="M12 10v4M12 16.8v.4"/></svg>',
+};
 
 /* ====== Утилиты ====== */
 const $ = (s, el = document) => el.querySelector(s);
@@ -284,11 +341,11 @@ const prioColor = { high:"#FF3B30", medium:"#FF9500", low:"#34C759" };
 const prioLabel = { high:"Высокий", medium:"Средний", low:"Низкий" };
 const catLabel = { person:"Люди", preference:"Предпочтения", routine:"Рутины", place:"Места", other:"Прочее" };
 const NAV = [
-  { id:"dash", label:"Сегодня", icon:"☀︎" },
-  { id:"chat", label:"Ассистент", icon:"✦" },
-  { id:"calendar", label:"Календарь", icon:"▦" },
-  { id:"tasks", label:"Задачи", icon:"☑" },
-  { id:"memory", label:"Память", icon:"◉" },
+  { id:"dash", label:"Сегодня", icon:IC.sun },
+  { id:"chat", label:"Ассистент", icon:IC.spark },
+  { id:"calendar", label:"Календарь", icon:IC.cal },
+  { id:"tasks", label:"Задачи", icon:IC.check },
+  { id:"memory", label:"Память", icon:IC.chipIcon },
 ];
 
 /* ====== Состояние ====== */
@@ -299,6 +356,8 @@ const S = {
   calMode: "week", calMonth: { y: now0.getFullYear(), m: now0.getMonth() },
   weekStart: mondayOf(now0), selectedDay: fmtDate(now0),
   micOn: false, notifOn: localStorage.getItem("lifeos-notif") === "1",
+  modal: null,
+  name: localStorage.getItem("lifeos-name") || "",
 };
 function mondayOf(d) {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -306,7 +365,7 @@ function mondayOf(d) {
   return x;
 }
 
-/* ====== Данные: мгновенный старт из кэша + фоновое обновление ====== */
+/* ====== Данные ====== */
 const cacheKey = () => "lifeos-data-" + (S.session?.user?.id || "anon");
 function hydrateFromCache() {
   try {
@@ -333,7 +392,7 @@ const chatStoreKey = () => "lifeos-chat-" + (S.session?.user?.id || "anon");
 function loadChat() { try { S.chat = JSON.parse(localStorage.getItem(chatStoreKey()) || "[]"); } catch { S.chat = []; } }
 function saveChat() { try { localStorage.setItem(chatStoreKey(), JSON.stringify(S.chat.slice(-40))); } catch {} }
 
-/* ====== ИИ (промпт ужат для скорости) ====== */
+/* ====== ИИ ====== */
 function buildSystem() {
   const n = new Date();
   const today = fmtDate(n);
@@ -344,7 +403,8 @@ function buildSystem() {
   const tk = S.tasks.filter((t) => !t.done).slice(0, 80)
     .map((t) => ({ id:t.id, t:t.title, p:t.priority, due:t.due_date||undefined }));
   const mm = S.memories.slice(-50).map((m) => ({ id:m.id, f:m.fact, c:m.category }));
-  return `Ты — AI-ассистент LifeOS. Управляешь календарём, задачами и памятью пользователя.
+  const uname = S.name ? `Пользователя зовут ${S.name}.` : "";
+  return `Ты — AI-ассистент LifeOS. Управляешь календарём, задачами и памятью пользователя. ${uname}
 СЕЙЧАС: ${WD_FULL[n.getDay()]}, ${today}, ${pad(n.getHours())}:${pad(n.getMinutes())}.
 СОБЫТИЯ(t=назв,d=дата,tm=время,dur=мин,loc=место): ${JSON.stringify(ev)}
 ЗАДАЧИ(p=приоритет,due=срок): ${JSON.stringify(tk)}
@@ -359,7 +419,7 @@ actions (используй ровно эти поля):
 {"type":"update_task","id":"", ...поля} | {"type":"complete_task","id":""} | {"type":"delete_task","id":""}
 {"type":"save_memory","fact":"","category":"person|preference|routine|place|other"} | {"type":"delete_memory","id":""}
 
-Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 5) reply — 1–3 коротких предложения.`;
+Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) «Вечером» = 18:00–21:00, «утром» = 8:00–11:00, если сказано «в 6 вечера» — это 18:00. 5) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 6) reply — 1–3 коротких предложения.`;
 }
 
 async function applyActions(actions) {
@@ -425,13 +485,12 @@ async function sendMsg(text) {
       const s = c.indexOf("{"), e = c.lastIndexOf("}");
       parsed = JSON.parse(s >= 0 && e > s ? c.slice(s, e+1) : c);
     } catch {
-      // Ответ оборван/повреждён: вытаскиваем человеческий текст, сырой код не показываем никогда
       const m = raw.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/);
       const salvaged = m ? m[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').trim() : "";
       parsed = {
         reply: salvaged
           ? salvaged + "\n\n⚠️ Ответ оборвался, действия могли не выполниться — повторите запрос."
-          : "Ответ пришёл повреждённым. Повторите запрос — или, если это повторяется, смените модель в настройках на обычную (не thinking).",
+          : "Ответ пришёл повреждённым. Повторите запрос — или смените модель на обычную (не thinking).",
         actions: [],
       };
     }
@@ -443,7 +502,7 @@ async function sendMsg(text) {
   saveChat(); S.aiBusy = false; render();
 }
 
-/* ====== Голосовой ввод ====== */
+/* ====== Голос ====== */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
 function toggleMic() {
@@ -459,8 +518,7 @@ function toggleMic() {
   };
   recognizer.onend = () => {
     S.micOn = false;
-    const inp = $("#msg");
-    const t = (inp?.value || "").trim();
+    const t = ($("#msg")?.value || "").trim();
     render();
     if (t) sendMsg(t);
   };
@@ -469,7 +527,7 @@ function toggleMic() {
   recognizer.start();
 }
 
-/* ====== Напоминания (пока приложение открыто/установлено) ====== */
+/* ====== Напоминания ====== */
 async function toggleNotif(on) {
   if (on) {
     if (!("Notification" in window)) { alert("Уведомления не поддерживаются этим браузером."); return; }
@@ -516,7 +574,7 @@ function render() {
   app.innerHTML = `
     <nav class="sidebar">
       <div class="logo"><img src="./icon-192.png" alt="">Life<em>OS</em></div>
-      ${NAV.map((n) => `<button data-nav="${n.id}" class="${S.view===n.id?"on":""}"><span class="ic">${n.icon}</span> ${n.label}</button>`).join("")}
+      ${NAV.map((n) => `<button data-nav="${n.id}" class="${S.view===n.id?"on":""}">${n.icon} ${n.label}</button>`).join("")}
       <div style="flex:1"></div>
       <button data-signout style="color:var(--text2)">Выйти</button>
     </nav>
@@ -533,13 +591,21 @@ function render() {
         <button class="rbtn sendbtn" id="send" ${S.aiBusy?"disabled":""}>↑</button>
       </div>` : ""}
       <div class="tabbar">
-        ${NAV.map((n) => `<button data-nav="${n.id}" class="${S.view===n.id?"on":""}"><span class="ic">${n.icon}</span>${n.label}</button>`).join("")}
+        ${NAV.map((n) => `<button data-nav="${n.id}" class="${S.view===n.id?"on":""}">${n.icon}${n.label}</button>`).join("")}
       </div>
-    </div>`;
+    </div>
+    ${S.modal ? renderModal() : ""}`;
   bindMain();
   if (S.view === "chat") { const c = $("#content"); c.scrollTop = c.scrollHeight; }
-  if (S.view === "calendar" && S.calMode === "week") {
-    const sc = $(".week-scroll"); if (sc) sc.scrollTop = Math.max(0, (new Date().getHours()-8)*48);
+  if (S.view === "calendar" && (S.calMode === "week" || S.calMode === "day")) {
+    const sc = $(".tg-scroll");
+    if (sc) {
+      sc.scrollTop = Math.max(0, (new Date().getHours()-8)*52);
+      if (S.calMode === "week") {
+        const idx = Math.floor((parseDate(fmtDate(new Date())) - S.weekStart) / 864e5);
+        if (idx >= 0 && idx < 7) sc.scrollLeft = Math.max(0, idx * 104 - 30);
+      }
+    }
   }
 }
 function renderView() {
@@ -551,10 +617,41 @@ function renderView() {
   return "";
 }
 
+/* --- Приветствие с именем --- */
+function greeting() {
+  const n = new Date(); const h = n.getHours();
+  const base = h<5 ? "Доброй ночи" : h<12 ? "Доброе утро" : h<18 ? "Добрый день" : "Добрый вечер";
+  const nm = S.name;
+  if (!nm) return base + "!";
+  const opts = [base + "!", `${base}, ${nm}!`, `${base}, ${nm}!`, `С возвращением, ${nm}!`, base + "!", `Рад видеть, ${nm}!`];
+  if (h >= 8 && h < 18) opts.push(`Хорошего дня, ${nm}!`);
+  const seed = n.getDate() * 7 + Math.floor(h / 3);
+  return opts[seed % opts.length];
+}
+
+/* --- Рекомендации --- */
+function buildRecs() {
+  const n = new Date(); const today = fmtDate(n);
+  const nowMin = n.getHours()*60 + n.getMinutes();
+  const recs = [];
+  const upcoming = S.events
+    .filter((e) => e.date === today && e.time && (parseInt(e.time)*60 + parseInt(e.time.slice(3,5))) >= nowMin - 5)
+    .sort((a,b) => a.time < b.time ? -1 : 1)[0];
+  if (upcoming) recs.push({ ic:IC.clock, c:"#0A84FF", t:`Ближайшее: <b>${esc(upcoming.title)}</b> в ${hm(upcoming.time)}${upcoming.location ? " · " + esc(upcoming.location) : ""}` });
+  const overdue = S.tasks.filter((t) => !t.done && t.due_date && t.due_date < today);
+  if (overdue.length) recs.push({ ic:IC.warn, c:"#FF3B30", t:`Просрочено ${overdue.length}: начните с «${esc(overdue[0].title)}»` });
+  const hi = S.tasks.filter((t) => !t.done && t.priority === "high" && (!t.due_date || t.due_date >= today));
+  if (hi.length) recs.push({ ic:IC.bolt, c:"#FF9500", t:`Важное: <b>${esc(hi[0].title)}</b>${hi[0].due_date ? " — до " + humanDate(hi[0].due_date) : ""}` });
+  const tom = fmtDate(new Date(Date.now()+864e5));
+  const tomEv = S.events.filter((e) => e.date === tom).sort((a,b) => (a.time||"99")<(b.time||"99")?-1:1)[0];
+  if (tomEv && recs.length < 3) recs.push({ ic:IC.flag, c:"#34C759", t:`Завтра: <b>${esc(tomEv.title)}</b>${tomEv.time ? " в " + hm(tomEv.time) : ""}` });
+  if (!recs.length) recs.push({ ic:IC.bolt, c:"#0A84FF", t:`Расписание свободно. Скажите ассистенту «спланируй мою неделю» — он предложит план.` });
+  return recs.slice(0, 3);
+}
+
 /* --- Дашборд --- */
 function viewDash() {
-  const n = new Date(); const h = n.getHours();
-  const greet = h<5 ? "Доброй ночи" : h<12 ? "Доброе утро" : h<18 ? "Добрый день" : "Добрый вечер";
+  const n = new Date();
   const today = fmtDate(n);
   const todayEv = S.events.filter((e) => e.date===today).sort((a,b) => (a.time||"99")<(b.time||"99")?-1:1);
   const active = S.tasks.filter((t) => !t.done);
@@ -564,13 +661,23 @@ function viewDash() {
   const doneWeek = S.tasks.filter((t) => t.done && (t.updated_at||"").slice(0,10) >= weekAgo).length;
   const totalWeek = doneWeek + active.length;
   const pct = totalWeek ? Math.round(doneWeek/totalWeek*100) : 0;
+  const recs = buildRecs();
   return `
-    <div class="dash-greet">${greet}!</div>
+    <div class="dash-greet">${esc(greeting())}</div>
     <div class="dash-date">${WD_FULL[n.getDay()][0].toUpperCase()+WD_FULL[n.getDay()].slice(1)}, ${n.getDate()} ${MONTHS_GEN[n.getMonth()]}</div>
+    ${!S.name ? `
+    <div class="card">
+      <h3>Знакомство</h3>
+      <div class="name-row"><input id="uname" placeholder="Как к вам обращаться?" maxlength="30"><button id="savename">Сохранить</button></div>
+    </div>` : ""}
     <div class="stat-row">
-      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,#2E9BFF,#0A84FF)">📅</div><div class="num">${todayEv.length}</div><div class="lbl">событий сегодня</div></div>
-      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,#FFB340,#FF9500)">☑️</div><div class="num">${dueToday.length}</div><div class="lbl">задач на сегодня</div></div>
-      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,${overdue.length?"#FF6B61,#FF3B30":"#30D158,#34C759"})">${overdue.length?"⚠️":"✓"}</div><div class="num">${overdue.length}</div><div class="lbl">просрочено</div></div>
+      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,#2E9BFF,#0A84FF)">${IC.cal}</div><div class="num">${todayEv.length}</div><div class="lbl">событий сегодня</div></div>
+      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,#FFB340,#FF9500)">${IC.check}</div><div class="num">${dueToday.length}</div><div class="lbl">задач на сегодня</div></div>
+      <div class="stat"><div class="ico" style="background:linear-gradient(135deg,${overdue.length?"#FF6B61,#FF3B30":"#30D158,#34C759"})">${overdue.length ? IC.warn : IC.tick}</div><div class="num">${overdue.length}</div><div class="lbl">просрочено</div></div>
+    </div>
+    <div class="card">
+      <h3>Рекомендации</h3>
+      ${recs.map((r) => `<div class="rec-row"><div class="ri" style="background:${r.c}">${r.ic}</div><div>${r.t}</div></div>`).join("")}
     </div>
     <div class="card">
       <h3>Расписание на сегодня</h3>
@@ -588,14 +695,14 @@ function viewDash() {
         <label class="switch"><input type="checkbox" id="notif" ${S.notifOn?"checked":""}><span class="knob"></span></label>
       </div>
     </div>
-    <button class="plan-btn" data-plan>✦ Спланируй мой день</button>`;
+    <button class="plan-btn" data-plan>${IC.spark.replace('class="nic"','class="nic" style="width:18px;height:18px"')} Спланируй мой день</button>`;
 }
 
 /* --- Чат --- */
 function viewChat() {
   let h = "";
   if (!S.chat.length) {
-    h += `<div class="bubble ai">Привет! Я ваш ассистент в LifeOS: веду календарь, задачи и помню важное о вас. С чего начнём?</div>
+    h += `<div class="bubble ai">Привет${S.name ? ", " + esc(S.name) : ""}! Я ваш ассистент в LifeOS: веду календарь, задачи и помню важное о вас. С чего начнём?</div>
     <div class="suggest">
       ${["Запланируй встречу завтра в 15:00","Добавь задачу: купить продукты","Что у меня на этой неделе?"].map((s) => `<button data-suggest="${esc(s)}">${esc(s)}</button>`).join("")}
     </div>`;
@@ -610,9 +717,16 @@ function viewChat() {
 
 /* --- Календарь --- */
 function viewCalendar() {
-  const seg = `<div class="seg"><button data-mode="week" class="${S.calMode==="week"?"on":""}">Неделя</button><button data-mode="month" class="${S.calMode==="month"?"on":""}">Месяц</button></div>`;
-  return S.calMode === "month" ? calMonthView(seg) : calWeekView(seg);
+  const seg = `<div class="seg">
+    <button data-mode="day" class="${S.calMode==="day"?"on":""}">День</button>
+    <button data-mode="week" class="${S.calMode==="week"?"on":""}">Неделя</button>
+    <button data-mode="month" class="${S.calMode==="month"?"on":""}">Месяц</button>
+  </div>`;
+  if (S.calMode === "month") return calMonthView(seg);
+  if (S.calMode === "day") return calDayView(seg);
+  return calWeekView(seg);
 }
+
 function calMonthView(seg) {
   const today = fmtDate(new Date());
   const first = new Date(S.calMonth.y, S.calMonth.m, 1);
@@ -622,9 +736,9 @@ function calMonthView(seg) {
   let cells = "";
   for (let i=0;i<42;i++){
     const d = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
-    const k = fmtDate(d); const n = (byDate[k]||[]).length;
+    const k = fmtDate(d); const cnt = (byDate[k]||[]).length;
     cells += `<div class="cal-cell ${d.getMonth()===S.calMonth.m?"":"out"} ${k===today?"today":""} ${k===S.selectedDay?"sel":""}" data-day="${k}">
-      <div class="num">${d.getDate()}</div><div class="dots">${"<i></i>".repeat(Math.min(n,3))}</div></div>`;
+      <div class="num">${d.getDate()}</div><div class="dots">${"<i></i>".repeat(Math.min(cnt,3))}</div></div>`;
   }
   const dayEv = (byDate[S.selectedDay]||[]).sort((a,b) => (a.time||"99")<(b.time||"99")?-1:1);
   const sd = parseDate(S.selectedDay);
@@ -632,7 +746,7 @@ function calMonthView(seg) {
     <div class="cal-head">
       <div class="cal-title">${MONTHS[S.calMonth.m]}<span class="yr">${S.calMonth.y}</span></div>
       ${seg}
-      <div class="cal-nav"><button data-cal="-1">‹</button><button class="today-btn" data-cal="0">Сегодня</button><button data-cal="1">›</button></div>
+      <div class="cal-nav"><button data-cal="-1">‹</button><button class="today-btn" data-cal="0">Сегодня</button><button data-cal="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>
     </div>
     <div class="cal-grid">
       <div class="cal-wd">${WD.map((w)=>`<div>${w}</div>`).join("")}</div>
@@ -641,27 +755,27 @@ function calMonthView(seg) {
     <div class="day-panel">
       <h3>${humanDate(S.selectedDay)}${humanDate(S.selectedDay).length<8 ? `, ${sd.getDate()} ${MONTHS_GEN[sd.getMonth()]}` : ""}</h3>
       ${dayEv.length ? dayEv.map((e) => `
-        <div class="ev-row"><div class="bar"></div><div style="flex:1">
+        <div class="ev-row" data-ev="${e.id}"><div class="bar"></div><div style="flex:1">
           <div class="t">${esc(e.title)}</div>
           <div class="m">${hm(e.time)||"Весь день"}${e.duration_min?` · ${e.duration_min} мин`:""}${e.location?` · ${esc(e.location)}`:""}</div>
           ${e.notes?`<div class="m">${esc(e.notes)}</div>`:""}
-        </div></div>`).join("") : '<div class="empty-card">Нет событий. Попросите ассистента что-нибудь запланировать.</div>'}
+        </div></div>`).join("") : '<div class="empty-card">Нет событий. Нажмите ＋ или попросите ассистента.</div>'}
     </div>`;
 }
-function calWeekView(seg) {
-  const H0=6, H1=23, PX=48;
-  const days = [];
-  for (let i=0;i<7;i++) days.push(new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+i));
-  const today = fmtDate(new Date()); const last = days[6];
-  const rangeTitle = `${days[0].getDate()} ${MONTHS_GEN[days[0].getMonth()]} — ${last.getDate()} ${MONTHS_GEN[last.getMonth()]}`;
-  let head = `<div class="wd"></div>`;
+
+function timeGrid(days, mode) {
+  const H0=6, H1=23, PX=52;
+  const today = fmtDate(new Date());
+  const n = new Date();
+  let head = `<div class="tg-head tcorner"></div>`;
   for (const d of days) {
     const k = fmtDate(d);
-    head += `<div class="wd ${k===today?"today":""}">${WD[(d.getDay()+6)%7]}<span class="dnum">${d.getDate()}</span></div>`;
+    head += `<div class="tg-head ${k===today?"today":""}">${WD[(d.getDay()+6)%7]}<span class="dnum">${d.getDate()}</span></div>`;
   }
-  let hourCol = "";
+  let hourCol = `<div class="tcol">`;
   for (let h=H0;h<=H1;h++) hourCol += `<div class="hour-lbl" style="height:${PX}px">${pad(h)}:00</div>`;
-  let cols = ""; const n = new Date();
+  hourCol += `</div>`;
+  let cols = "";
   for (const d of days) {
     const k = fmtDate(d);
     const evs = S.events.filter((e) => e.date===k && e.time);
@@ -670,8 +784,8 @@ function calWeekView(seg) {
       const [hh,mm] = e.time.split(":").map(Number);
       if (hh > H1) continue;
       const top = Math.max(0, (hh-H0)*PX + (mm/60)*PX);
-      const height = Math.max(24, ((e.duration_min||60)/60)*PX - 2);
-      blocks += `<div class="wev" style="top:${top}px;height:${height}px" title="${esc(e.title)} ${hm(e.time)}${e.location?" · "+esc(e.location):""}">${esc(e.title)}<div class="wt">${hm(e.time)}</div></div>`;
+      const height = Math.max(26, ((e.duration_min||60)/60)*PX - 3);
+      blocks += `<div class="wev" data-ev="${e.id}" style="top:${top}px;height:${height}px">${esc(e.title)}<div class="wt">${hm(e.time)}${e.location ? " · " + esc(e.location) : ""}</div></div>`;
     }
     let nowLine = "";
     if (k===today && n.getHours()>=H0 && n.getHours()<=H1) {
@@ -681,29 +795,51 @@ function calWeekView(seg) {
   }
   const allDay = S.events.filter((e) => !e.time && days.some((d)=>fmtDate(d)===e.date));
   return `
+    ${allDay.length ? `<div class="card" style="padding:12px 16px;margin-bottom:10px"><h3 style="margin-bottom:6px">Весь день</h3>${allDay.map((e)=>`<div data-ev="${e.id}" style="font-size:14.5px;font-weight:500;padding:4px 0;cursor:pointer">📌 ${esc(e.title)} — ${humanDate(e.date)}</div>`).join("")}</div>` : ""}
+    <div class="tg-scroll" style="max-height:calc(100dvh - 300px)">
+      <div class="tg ${mode}">
+        ${head}
+        ${hourCol}${cols}
+      </div>
+    </div>`;
+}
+
+function calWeekView(seg) {
+  const days = [];
+  for (let i=0;i<7;i++) days.push(new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+i));
+  const last = days[6];
+  const rangeTitle = `${days[0].getDate()} ${MONTHS_GEN[days[0].getMonth()]} — ${last.getDate()} ${MONTHS_GEN[last.getMonth()]}`;
+  return `
     <div class="cal-head">
       <div class="cal-title">${rangeTitle}</div>
       ${seg}
-      <div class="cal-nav"><button data-week="-1">‹</button><button class="today-btn" data-week="0">Сегодня</button><button data-week="1">›</button></div>
+      <div class="cal-nav"><button data-week="-1">‹</button><button class="today-btn" data-week="0">Сегодня</button><button data-week="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>
     </div>
-    ${allDay.length ? `<div class="card" style="padding:12px 16px;margin-bottom:10px"><h3 style="margin-bottom:6px">Весь день</h3>${allDay.map((e)=>`<div style="font-size:14.5px;font-weight:500;padding:3px 0">📌 ${esc(e.title)} — ${humanDate(e.date)}</div>`).join("")}</div>` : ""}
-    <div class="week-scroll" style="max-height:calc(100dvh - 280px)">
-      <div class="week-inner">
-        <div class="week-header">${head}</div>
-        <div class="week-body"><div>${hourCol}</div>${cols}</div>
-      </div>
-    </div>`;
+    ${timeGrid(days, "week")}`;
+}
+
+function calDayView(seg) {
+  const d = parseDate(S.selectedDay);
+  const title = `${WD_FULL[d.getDay()][0].toUpperCase()+WD_FULL[d.getDay()].slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
+  return `
+    <div class="cal-head">
+      <div class="cal-title">${title}</div>
+      ${seg}
+      <div class="cal-nav"><button data-dnav="-1">‹</button><button class="today-btn" data-dnav="0">Сегодня</button><button data-dnav="1">›</button><button class="addbtn" data-newev>${IC.plus}</button></div>
+    </div>
+    ${timeGrid([d], "day")}`;
 }
 
 /* --- Задачи --- */
 function viewTasks() {
   const today = fmtDate(new Date());
   const act = S.tasks.filter((t)=>!t.done); const done = S.tasks.filter((t)=>t.done);
-  if (!S.tasks.length) return '<div class="empty-card">Задач пока нет. Скажите ассистенту: «добавь задачу…»</div>';
+  const toolbar = `<div class="list-toolbar"><button class="new-btn" data-newtask>${IC.plus} Новая задача</button></div>`;
+  if (!S.tasks.length) return toolbar + '<div class="empty-card">Задач пока нет. Добавьте вручную или скажите ассистенту.</div>';
   const row = (t) => `
     <div class="task-row ${t.done?"done":""}">
-      <div class="checkbox ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</div>
-      <div style="flex:1">
+      <div class="checkbox ${t.done?"on":""}" data-task="${t.id}">${t.done ? IC.tick : ""}</div>
+      <div class="task-body" data-edittask="${t.id}">
         <div class="t">${esc(t.title)}</div>
         ${t.done ? "" : `<div class="m">
           <span class="pill" style="background:${prioColor[t.priority]||"#8E8E93"}">${prioLabel[t.priority]||esc(t.priority)}</span>
@@ -712,7 +848,7 @@ function viewTasks() {
         </div>`}
       </div>
     </div>`;
-  return act.map(row).join("") + (done.length ? `<div class="section-label">Выполнено</div>` + done.map(row).join("") : "");
+  return toolbar + act.map(row).join("") + (done.length ? `<div class="section-label">Выполнено</div>` + done.map(row).join("") : "");
 }
 
 /* --- Память --- */
@@ -723,6 +859,99 @@ function viewMemory() {
       <div style="flex:1"><div class="f">${esc(m.fact)}</div><div class="c">${catLabel[m.category]||esc(m.category)} · ${(m.created_at||"").slice(0,10)}</div></div>
       <button class="forget" data-forget="${m.id}">Забыть</button>
     </div>`).join("");
+}
+
+/* --- Шторка редактирования --- */
+function renderModal() {
+  const m = S.modal;
+  if (m.type === "event") {
+    const e = m.data;
+    return `
+    <div class="overlay" id="overlay">
+      <div class="sheet" id="sheet">
+        <h2>${e.id ? "Событие" : "Новое событие"}</h2>
+        <div class="frow"><label>Название</label><input class="finput" id="f-title" value="${esc(e.title||"")}" placeholder="Например: Встреча с командой"></div>
+        <div class="fgrid">
+          <div class="frow"><label>Дата</label><input class="finput" id="f-date" type="date" value="${esc(e.date||S.selectedDay)}"></div>
+          <div class="frow"><label>Время</label><input class="finput" id="f-time" type="time" value="${esc(hm(e.time)||"")}"></div>
+        </div>
+        <div class="fgrid">
+          <div class="frow"><label>Длительность, мин</label><input class="finput" id="f-dur" type="number" min="5" step="5" value="${e.duration_min||""}" placeholder="60"></div>
+          <div class="frow"><label>Место</label><input class="finput" id="f-loc" value="${esc(e.location||"")}" placeholder="Офис, Zoom…"></div>
+        </div>
+        <div class="frow"><label>Заметки</label><input class="finput" id="f-notes" value="${esc(e.notes||"")}" placeholder="Детали"></div>
+        <div class="sheet-actions">
+          <button class="btn-primary" id="m-save">Сохранить</button>
+          ${e.id ? `<button class="btn-danger" id="m-del">Удалить событие</button>` : ""}
+          <button class="btn-ghost" id="m-cancel">Отмена</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  const t = m.data;
+  return `
+  <div class="overlay" id="overlay">
+    <div class="sheet" id="sheet">
+      <h2>${t.id ? "Задача" : "Новая задача"}</h2>
+      <div class="frow"><label>Название</label><input class="finput" id="f-title" value="${esc(t.title||"")}" placeholder="Что нужно сделать?"></div>
+      <div class="fgrid">
+        <div class="frow"><label>Приоритет</label>
+          <select class="finput" id="f-prio">
+            <option value="high" ${t.priority==="high"?"selected":""}>Высокий</option>
+            <option value="medium" ${!t.priority||t.priority==="medium"?"selected":""}>Средний</option>
+            <option value="low" ${t.priority==="low"?"selected":""}>Низкий</option>
+          </select>
+        </div>
+        <div class="frow"><label>Срок</label><input class="finput" id="f-due" type="date" value="${esc(t.due_date||"")}"></div>
+      </div>
+      <div class="frow"><label>Заметки</label><input class="finput" id="f-notes" value="${esc(t.notes||"")}" placeholder="Детали"></div>
+      <div class="sheet-actions">
+        <button class="btn-primary" id="m-save">Сохранить</button>
+        ${t.id ? `<button class="btn-danger" id="m-del">Удалить задачу</button>` : ""}
+        <button class="btn-ghost" id="m-cancel">Отмена</button>
+      </div>
+    </div>
+  </div>`;
+}
+function openEvent(ev) { S.modal = { type:"event", data: ev || {} }; render(); }
+function openTask(t) { S.modal = { type:"task", data: t || {} }; render(); }
+async function saveModal() {
+  const m = S.modal; if (!m) return;
+  const uid = S.session.user.id;
+  const title = ($("#f-title")?.value || "").trim();
+  if (!title) { $("#f-title").focus(); return; }
+  if (m.type === "event") {
+    const row = {
+      title,
+      date: $("#f-date").value || fmtDate(new Date()),
+      time: $("#f-time").value || null,
+      duration_min: parseInt($("#f-dur").value) || null,
+      location: ($("#f-loc").value || "").trim() || null,
+      notes: ($("#f-notes").value || "").trim() || null,
+    };
+    if (m.data.id) await sb.from("events").update(row).eq("id", m.data.id);
+    else await sb.from("events").insert({ ...row, user_id: uid });
+  } else {
+    const row = {
+      title,
+      priority: $("#f-prio").value,
+      due_date: $("#f-due").value || null,
+      notes: ($("#f-notes").value || "").trim() || null,
+    };
+    if (m.data.id) await sb.from("tasks").update(row).eq("id", m.data.id);
+    else await sb.from("tasks").insert({ ...row, user_id: uid });
+  }
+  S.modal = null;
+  await loadAll();
+  render();
+}
+async function deleteModal() {
+  const m = S.modal; if (!m || !m.data.id) return;
+  if (!confirm(m.type === "event" ? "Удалить это событие?" : "Удалить эту задачу?")) return;
+  await sb.from(m.type === "event" ? "events" : "tasks").delete().eq("id", m.data.id);
+  S.modal = null;
+  await loadAll();
+  render();
 }
 
 /* ====== Авторизация ====== */
@@ -759,7 +988,7 @@ async function doAuth() {
 
 /* ====== Обработчики ====== */
 function bindMain() {
-  $$("[data-nav]").forEach((b)=>(b.onclick=()=>{ S.view=b.dataset.nav; render(); }));
+  $$("[data-nav]").forEach((b)=>(b.onclick=()=>{ S.view=b.dataset.nav; S.modal=null; render(); }));
   $$("[data-signout]").forEach((b)=>(b.onclick=async()=>{ await sb.auth.signOut(); }));
   const send = $("#send"); if (send) send.onclick = () => sendMsg();
   const msg = $("#msg"); if (msg) msg.onkeydown = (e)=>{ if (e.key==="Enter") sendMsg(); };
@@ -767,6 +996,15 @@ function bindMain() {
   $$("[data-suggest]").forEach((b)=>(b.onclick=()=>sendMsg(b.dataset.suggest)));
   const plan = $("[data-plan]"); if (plan) plan.onclick = () => { S.view="chat"; render(); sendMsg("Спланируй мой день с учётом моих событий и задач"); };
   const nt = $("#notif"); if (nt) nt.onchange = () => toggleNotif(nt.checked);
+  const sn = $("#savename");
+  if (sn) sn.onclick = async () => {
+    const v = ($("#uname").value || "").trim();
+    if (!v) return;
+    S.name = v;
+    localStorage.setItem("lifeos-name", v);
+    try { await sb.auth.updateUser({ data: { name: v } }); } catch {}
+    render();
+  };
   $$("[data-mode]").forEach((b)=>(b.onclick=()=>{ S.calMode=b.dataset.mode; render(); }));
   $$("[data-cal]").forEach((b)=>(b.onclick=()=>{
     const v = +b.dataset.cal;
@@ -780,10 +1018,26 @@ function bindMain() {
     else S.weekStart = new Date(S.weekStart.getFullYear(), S.weekStart.getMonth(), S.weekStart.getDate()+v*7);
     render();
   }));
+  $$("[data-dnav]").forEach((b)=>(b.onclick=()=>{
+    const v = +b.dataset.dnav;
+    if (v===0) S.selectedDay = fmtDate(new Date());
+    else { const d = parseDate(S.selectedDay); d.setDate(d.getDate()+v); S.selectedDay = fmtDate(d); }
+    render();
+  }));
   $$("[data-day]").forEach((c)=>(c.onclick=()=>{ S.selectedDay=c.dataset.day; render(); }));
+  $$("[data-ev]").forEach((el)=>(el.onclick=()=>{
+    const ev = S.events.find((x)=>x.id===el.dataset.ev);
+    if (ev) openEvent({ ...ev });
+  }));
+  $$("[data-newev]").forEach((b)=>(b.onclick=()=>openEvent(null)));
+  $$("[data-newtask]").forEach((b)=>(b.onclick=()=>openTask(null)));
+  $$("[data-edittask]").forEach((el)=>(el.onclick=()=>{
+    const t = S.tasks.find((x)=>x.id===el.dataset.edittask);
+    if (t) openTask({ ...t });
+  }));
   $$("[data-task]").forEach((c)=>(c.onclick=async()=>{
     const t = S.tasks.find((x)=>x.id===c.dataset.task); if (!t) return;
-    t.done = !t.done; render(); // мгновенно в интерфейсе
+    t.done = !t.done; render();
     await sb.from("tasks").update({ done: t.done }).eq("id", t.id);
     loadAll(true);
   }));
@@ -792,18 +1046,31 @@ function bindMain() {
     await sb.from("memories").delete().eq("id", b.dataset.forget);
     loadAll();
   }));
+  const ov = $("#overlay");
+  if (ov) {
+    ov.onclick = (e) => { if (e.target === ov) { S.modal = null; render(); } };
+    $("#m-save").onclick = saveModal;
+    $("#m-cancel").onclick = () => { S.modal = null; render(); };
+    const del = $("#m-del"); if (del) del.onclick = deleteModal;
+  }
 }
 
-/* ====== Старт: мгновенно из кэша, данные обновляются фоном ====== */
+/* ====== Старт ====== */
 sb.auth.onAuthStateChange(async (_e, session) => {
   const had = !!S.session; S.session = session;
-  if (session && !had) { loadChat(); hydrateFromCache(); render(); loadAll(true); }
+  if (session && !had) {
+    if (!S.name && session.user?.user_metadata?.name) { S.name = session.user.user_metadata.name; localStorage.setItem("lifeos-name", S.name); }
+    loadChat(); hydrateFromCache(); render(); loadAll(true);
+  }
   else render();
 });
 (async () => {
   const { data } = await sb.auth.getSession();
   S.session = data.session;
-  if (S.session) { loadChat(); hydrateFromCache(); render(); loadAll(true); }
+  if (S.session) {
+    if (!S.name && S.session.user?.user_metadata?.name) { S.name = S.session.user.user_metadata.name; localStorage.setItem("lifeos-name", S.name); }
+    loadChat(); hydrateFromCache(); render(); loadAll(true);
+  }
   else render();
 })();
 </script>
