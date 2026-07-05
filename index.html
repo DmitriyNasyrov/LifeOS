@@ -23,7 +23,7 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
   --blur-bg: rgba(242,242,247,.82);
   --bubble-ai: #FFFFFF; --fill: rgba(120,120,128,.1); --fill2: rgba(120,120,128,.2);
-  --glass: rgba(255,255,255,.52); --glass-strong: rgba(255,255,255,.72);
+  --glass: rgba(255,255,255,.38); --glass-strong: rgba(255,255,255,.6);
   --glass-border: rgba(255,255,255,.65); --glass-hi: rgba(255,255,255,.55);
   --glass-shadow: 0 8px 32px rgba(31,38,60,.14);
 }
@@ -36,7 +36,7 @@
     --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
     --blur-bg: rgba(10,10,10,.8);
     --bubble-ai: #262628; --fill: rgba(120,120,128,.22); --fill2: rgba(120,120,128,.34);
-    --glass: rgba(26,26,30,.55); --glass-strong: rgba(36,36,40,.7);
+    --glass: rgba(26,26,30,.45); --glass-strong: rgba(36,36,40,.62);
     --glass-border: rgba(255,255,255,.14); --glass-hi: rgba(255,255,255,.12);
     --glass-shadow: 0 8px 32px rgba(0,0,0,.55);
   }
@@ -50,9 +50,9 @@ body {
 body::before {
   content: ""; position: fixed; inset: -15%; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(42% 36% at 16% 10%, rgba(10,132,255,.16), transparent 70%),
-    radial-gradient(36% 30% at 88% 18%, rgba(191,90,242,.13), transparent 70%),
-    radial-gradient(46% 40% at 72% 94%, rgba(48,209,88,.11), transparent 70%);
+    radial-gradient(42% 36% at 16% 10%, rgba(10,132,255,.28), transparent 70%),
+    radial-gradient(36% 30% at 88% 18%, rgba(191,90,242,.24), transparent 70%),
+    radial-gradient(46% 40% at 72% 94%, rgba(48,209,88,.20), transparent 70%);
 }
 #app { position: relative; z-index: 1; }
 button { font-family: inherit; cursor: pointer; color: var(--text); border: none; background: none;
@@ -338,6 +338,18 @@ input, select, textarea { font-family: inherit; }
   .stat-row { max-width: 600px; }
   .tg.week { min-width: 0; }
 }
+/* Liquid Glass: глянец и цели */
+.card, .stat { background-image: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 38%); }
+.tabbar { backdrop-filter: blur(36px) saturate(2); -webkit-backdrop-filter: blur(36px) saturate(2); }
+.tg-day-wrap {
+  background: var(--card2); backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: .5px solid var(--glass-border); border-radius: 18px; overflow: hidden;
+  box-shadow: var(--shadow), inset 0 1px 0 var(--glass-hi);
+}
+.goal-row { padding: 11px 0; border-bottom: .5px solid var(--sep); cursor: pointer; }
+.goal-row:last-child { border-bottom: none; padding-bottom: 2px; }
+.goal-row .gt { font-size: 15px; font-weight: 700; }
+.goal-row .gm { font-size: 12.5px; color: var(--text2); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -403,7 +415,7 @@ const NAV = [
 const now0 = new Date();
 const S = {
   session: null, authMode: "login", authBusy: false, authError: "",
-  view: "dash", events: [], tasks: [], memories: [], chat: [], aiBusy: false,
+  view: "dash", events: [], tasks: [], memories: [], goals: [], chat: [], aiBusy: false,
   calMode: "week", calMonth: { y: now0.getFullYear(), m: now0.getMonth() },
   weekStart: mondayOf(now0), selectedDay: fmtDate(now0),
   micOn: false, notifOn: localStorage.getItem("lifeos-notif") === "1",
@@ -421,21 +433,23 @@ const cacheKey = () => "lifeos-data-" + (S.session?.user?.id || "anon");
 function hydrateFromCache() {
   try {
     const c = JSON.parse(localStorage.getItem(cacheKey()) || "null");
-    if (c) { S.events = c.events||[]; S.tasks = c.tasks||[]; S.memories = c.memories||[]; }
+    if (c) { S.events = c.events||[]; S.tasks = c.tasks||[]; S.memories = c.memories||[]; S.goals = c.goals||[]; }
   } catch {}
 }
 function saveCache() {
-  try { localStorage.setItem(cacheKey(), JSON.stringify({ events:S.events, tasks:S.tasks, memories:S.memories })); } catch {}
+  try { localStorage.setItem(cacheKey(), JSON.stringify({ events:S.events, tasks:S.tasks, memories:S.memories, goals:S.goals })); } catch {}
 }
 async function loadAll(rerender = false) {
-  const [ev, tk, mm] = await Promise.all([
+  const [ev, tk, mm, gl] = await Promise.all([
     sb.from("events").select("*").order("date").order("time"),
     sb.from("tasks").select("*").order("done").order("due_date"),
     sb.from("memories").select("*").order("created_at"),
+    sb.from("goals").select("*").order("created_at"),
   ]);
   if (ev.data) S.events = ev.data;
   if (tk.data) S.tasks = tk.data;
   if (mm.data) S.memories = mm.data;
+  if (gl.data) S.goals = gl.data;
   saveCache();
   if (rerender) render();
 }
@@ -454,31 +468,43 @@ function buildSystem() {
   const tk = S.tasks.filter((t) => !t.done).slice(0, 80)
     .map((t) => ({ id:t.id, t:t.title, p:t.priority, due:t.due_date||undefined }));
   const mm = S.memories.slice(-50).map((m) => ({ id:m.id, f:m.fact, c:m.category }));
+  const gl = S.goals.filter((g) => g.status === "active").map((g) => ({ id:g.id, t:g.title, target:g.target_date||undefined }));
   const uname = S.name ? `Пользователя зовут ${S.name}.` : "";
   return `Ты — AI-ассистент LifeOS. Управляешь календарём, задачами и памятью пользователя. ${uname}
 СЕЙЧАС: ${WD_FULL[n.getDay()]}, ${today}, ${pad(n.getHours())}:${pad(n.getMinutes())}.
 СОБЫТИЯ(t=назв,d=дата,tm=время,dur=мин,loc=место): ${JSON.stringify(ev)}
 ЗАДАЧИ(p=приоритет,due=срок): ${JSON.stringify(tk)}
-ПАМЯТЬ: ${JSON.stringify(mm)}
+ПАМЯТЬ: ${JSON.stringify(mm)}\nЦЕЛИ: ${JSON.stringify(gl)}
 
 Ответ — ТОЛЬКО валидный JSON, без markdown: {"reply":"кратко по-русски","actions":[...]}
 actions (используй ровно эти поля):
 {"type":"create_event","title":"","date":"YYYY-MM-DD","time":"HH:MM"|null,"duration_min":число|null,"location":null,"notes":null}
 {"type":"update_event","id":"", ...изменяемые поля}
 {"type":"delete_event","id":""}
-{"type":"create_task","title":"","priority":"high|medium|low","due_date":"YYYY-MM-DD"|null,"notes":null}
+{"type":"create_task","title":"","priority":"high|medium|low","due_date":"YYYY-MM-DD"|null,"notes":null,"goal_id":null}
 {"type":"update_task","id":"", ...поля} | {"type":"complete_task","id":""} | {"type":"delete_task","id":""}
 {"type":"save_memory","fact":"","category":"person|preference|routine|place|other"} | {"type":"delete_memory","id":""}
+{"type":"create_goal","title":"","target_date":"YYYY-MM-DD"|null,"description":null} | {"type":"update_goal","id":"", ...поля, "progress":0-100, "status":"active|done"} | {"type":"delete_goal","id":""}
 
-Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) «Вечером» = 18:00–21:00, «утром» = 8:00–11:00, если сказано «в 6 вечера» — это 18:00. 5) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 6) reply — 1–3 коротких предложения.`;
+Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) «Вечером» = 18:00–21:00, «утром» = 8:00–11:00, если сказано «в 6 вечера» — это 18:00. 5) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 6) Если пользователь формулирует цель («хочу…», «моя цель…», «планирую добиться…») — создай create_goal и СРАЗУ декомпозируй её на 3–6 конкретных задач create_task с "goal_id":"NEW" и разумными сроками до target_date. 7) reply — 1–3 коротких предложения.`;
 }
 
 async function applyActions(actions) {
   if (!Array.isArray(actions)) return [];
-  const chips = []; const uid = S.session.user.id;
+  const chips = []; const uid = S.session.user.id; let lastGoalId = null;
   for (const a of actions) {
     try {
-      if (a.type === "create_event" && a.title && a.date) {
+      if (a.type === "create_goal" && a.title) {
+        const { data: gRow, error } = await sb.from("goals").insert({ user_id:uid, title:a.title, target_date:a.target_date||null, description:a.description||null }).select("id").single();
+        if (!error && gRow) { lastGoalId = gRow.id; chips.push({ i:"🎯", t:`Цель: ${a.title}${a.target_date ? " — к " + humanDate(a.target_date) : ""}` }); }
+      } else if (a.type === "update_goal" && a.id) {
+        const f = {}; for (const k of ["title","target_date","description","progress","status"]) if (k in a) f[k] = a[k];
+        const { error } = await sb.from("goals").update(f).eq("id", a.id);
+        if (!error) chips.push({ i:"🎯", t: a.status === "done" ? "Цель достигнута! 🎉" : "Цель обновлена" });
+      } else if (a.type === "delete_goal" && a.id) {
+        const { error } = await sb.from("goals").delete().eq("id", a.id);
+        if (!error) chips.push({ i:"🗑", t:"Цель удалена" });
+      } else if (a.type === "create_event" && a.title && a.date) {
         const { error } = await sb.from("events").insert({ user_id:uid, title:a.title, date:a.date, time:a.time||null, duration_min:a.duration_min||null, location:a.location||null, notes:a.notes||null });
         if (!error) chips.push({ i:"📅", t:`${a.title} — ${humanDate(a.date)}${a.time ? ", "+a.time : ""}` });
       } else if (a.type === "update_event" && a.id) {
@@ -490,7 +516,8 @@ async function applyActions(actions) {
         const { error } = await sb.from("events").delete().eq("id", a.id);
         if (!error) chips.push({ i:"🗑", t:`Удалено: ${ev ? ev.title : "событие"}` });
       } else if (a.type === "create_task" && a.title) {
-        const { error } = await sb.from("tasks").insert({ user_id:uid, title:a.title, priority:["high","medium","low"].includes(a.priority)?a.priority:"medium", due_date:a.due_date||null, notes:a.notes||null });
+        const gid = a.goal_id === "NEW" ? lastGoalId : (a.goal_id || null);
+        const { error } = await sb.from("tasks").insert({ user_id:uid, title:a.title, priority:["high","medium","low"].includes(a.priority)?a.priority:"medium", due_date:a.due_date||null, notes:a.notes||null, goal_id: gid });
         if (!error) chips.push({ i:"☑️", t:`Задача: ${a.title}${a.due_date ? " — до "+humanDate(a.due_date) : ""}` });
       } else if (a.type === "update_task" && a.id) {
         const f = {}; for (const k of ["title","priority","due_date","notes","done"]) if (k in a) f[k] = a[k];
@@ -699,13 +726,16 @@ function render() {
   bindMain();
   if (S.view === "chat") { const c = $("#content"); c.scrollTop = c.scrollHeight; }
   if (S.view === "calendar" && S.calMode === "week") {
-    const sc = $(".tg-scroll");
-    if (sc) {
-      sc.scrollTop = Math.max(0, (new Date().getHours()-8)*52);
-      if (isDesktop()) {
+    if (isDesktop()) {
+      const sc = $(".tg-scroll");
+      if (sc) {
+        sc.scrollTop = Math.max(0, (new Date().getHours()-8)*52);
         const idx = Math.floor((parseDate(fmtDate(new Date())) - S.weekStart) / 864e5);
         if (idx >= 0 && idx < 7) sc.scrollLeft = Math.max(0, idx * 104 - 30);
       }
+    } else if (S.selectedDay === fmtDate(new Date())) {
+      const g = $(".tg-day-wrap"); const c = $("#content");
+      if (g && c) c.scrollTop = Math.max(0, g.offsetTop + (new Date().getHours()-7)*52 - 180);
     }
   }
 }
@@ -780,6 +810,7 @@ function viewDash() {
       <h3>Рекомендации</h3>
       ${recs.map((r) => `<div class="rec-row"><div class="ri" style="background:${r.c}">${r.ic}</div><div>${r.t}</div></div>`).join("")}
     </div>
+    ${goalsCardHtml()}
     <div class="card">
       <h3>Расписание на сегодня</h3>
       ${todayEv.length ? todayEv.map((e) => `
@@ -795,9 +826,35 @@ function viewDash() {
         <div><div class="txt">Push-уведомления</div><div class="st">Напоминания за 10 мин и сводка в 8:00 — даже когда LifeOS закрыт</div></div>
         <label class="switch"><input type="checkbox" id="notif" ${S.notifOn?"checked":""}><span class="knob"></span></label>
       </div>
+      ${S.notifOn ? '<button class="hbtn" data-testpush style="margin-top:12px">Отправить тестовый push</button>' : ""}
     </div>
-    <div style="text-align:center;color:var(--text3);font-size:11px;font-weight:600;margin:2px 0 10px">LifeOS v4.0 · Liquid Glass</div>
+    <div style="text-align:center;color:var(--text3);font-size:11px;font-weight:600;margin:2px 0 10px">LifeOS v4.1 · Liquid Glass</div>
     <button class="plan-btn" data-plan>${IC.spark.replace('class="nic"','class="nic" style="width:18px;height:18px"')} Спланируй мой день</button>`;
+}
+
+/* --- Цели --- */
+function goalProgress(g) {
+  const linked = S.tasks.filter((t) => t.goal_id === g.id);
+  if (!linked.length) return { pct: g.progress || 0, label: "" };
+  const done = linked.filter((t) => t.done).length;
+  return { pct: Math.round(done / linked.length * 100), label: `${done}/${linked.length} задач` };
+}
+function goalsCardHtml() {
+  const active = S.goals.filter((g) => g.status === "active");
+  return `<div class="card">
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Цели <button class="hbtn" data-newgoal style="text-transform:none;letter-spacing:0">＋ Цель</button></h3>
+    ${active.length ? active.map((g) => {
+      const p = goalProgress(g);
+      return `<div class="goal-row" data-goal="${g.id}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <div class="gt">🎯 ${esc(g.title)}</div>
+          <div class="gm">${p.pct}%</div>
+        </div>
+        <div class="progress-track" style="margin-top:7px"><div class="progress-fill" style="width:${p.pct}%"></div></div>
+        <div class="gm" style="margin-top:5px">${p.label}${g.target_date ? (p.label ? " · " : "") + "к " + humanDate(g.target_date) : ""}</div>
+      </div>`;
+    }).join("") : '<div class="empty">Скажите ассистенту: «моя цель — …» — он составит план из задач.</div>'}
+  </div>`;
 }
 
 /* --- Чат --- */
@@ -919,14 +976,12 @@ function timeGrid(days, mode) {
     cols += `<div class="day-col ${k===today?"today":""}" style="height:${(H1-H0+1)*PX}px">${'<div class="hline"></div>'.repeat(H1-H0+1)}${blocks}${nowLine}</div>`;
   }
   const allDay = S.events.filter((e) => !e.time && days.some((d)=>fmtDate(d)===e.date));
-  return `
-    ${allDay.length ? `<div class="card" style="padding:12px 16px;margin-bottom:10px"><h3 style="margin-bottom:6px">Весь день</h3>${allDay.map((e)=>`<div data-ev="${e.id}" style="font-size:14.5px;font-weight:500;padding:4px 0;cursor:pointer">📌 ${esc(e.title)} — ${humanDate(e.date)}</div>`).join("")}</div>` : ""}
-    <div class="tg-scroll" style="max-height:calc(100dvh - ${mode==="week" ? "300" : "360"}px)">
-      <div class="tg ${mode}">
-        ${head}
-        ${hourCol}${cols}
-      </div>
-    </div>`;
+  const allDayHtml = allDay.length ? `<div class="card" style="padding:12px 16px;margin-bottom:10px"><h3 style="margin-bottom:6px">Весь день</h3>${allDay.map((e)=>`<div data-ev="${e.id}" style="font-size:14.5px;font-weight:500;padding:4px 0;cursor:pointer">📌 ${esc(e.title)} — ${humanDate(e.date)}</div>`).join("")}</div>` : "";
+  if (mode === "week") {
+    return `${allDayHtml}<div class="tg-scroll" style="max-height:calc(100dvh - 300px)"><div class="tg week">${head}${hourCol}${cols}</div></div>`;
+  }
+  // День: единый поток страницы, без вложенной прокрутки и без дублирующей шапки
+  return `${allDayHtml}<div class="tg-day-wrap"><div class="tg day">${hourCol}${cols}</div></div>`;
 }
 
 function weekDays() {
@@ -996,6 +1051,7 @@ function viewTasks() {
         ${t.done ? "" : `<div class="m">
           <span class="pill" style="background:${prioColor[t.priority]||"#8E8E93"}">${prioLabel[t.priority]||esc(t.priority)}</span>
           ${t.due_date ? `<span class="${t.due_date<today?"overdue":""}">до ${humanDate(t.due_date)}</span>` : ""}
+          ${t.goal_id && S.goals.find((g)=>g.id===t.goal_id) ? `<span>🎯 ${esc(S.goals.find((g)=>g.id===t.goal_id).title)}</span>` : ""}
           ${t.notes ? `<span>${esc(t.notes)}</span>` : ""}
         </div>`}
       </div>
@@ -1040,6 +1096,26 @@ function renderModal() {
       </div>
     </div>`;
   }
+  if (m.type === "goal") {
+    const g = m.data;
+    return `
+    <div class="overlay" id="overlay">
+      <div class="sheet" id="sheet">
+        <h2>${g.id ? "Цель" : "Новая цель"}</h2>
+        <div class="frow"><label>Формулировка</label><input class="finput" id="f-title" value="${esc(g.title||"")}" placeholder="Например: выучить английский до B2"></div>
+        <div class="fgrid">
+          <div class="frow"><label>Срок</label><input class="finput" id="f-target" type="date" value="${esc(g.target_date||"")}"></div>
+          <div class="frow"><label>Прогресс, % (если нет задач)</label><input class="finput" id="f-progress" type="number" min="0" max="100" value="${g.progress||0}"></div>
+        </div>
+        <div class="frow"><label>Описание</label><input class="finput" id="f-notes" value="${esc(g.description||"")}" placeholder="Зачем и что в результате"></div>
+        <div class="sheet-actions">
+          <button class="btn-primary" id="m-save">Сохранить</button>
+          ${g.id ? `<button class="btn-danger" id="m-del">Удалить цель</button>` : ""}
+          <button class="btn-ghost" id="m-cancel">Отмена</button>
+        </div>
+      </div>
+    </div>`;
+  }
   const t = m.data;
   return `
   <div class="overlay" id="overlay">
@@ -1067,12 +1143,24 @@ function renderModal() {
 }
 function openEvent(ev) { S.modal = { type:"event", data: ev || {} }; render(); }
 function openTask(t) { S.modal = { type:"task", data: t || {} }; render(); }
+function openGoal(g) { S.modal = { type:"goal", data: g || {} }; render(); }
 async function saveModal() {
   const m = S.modal; if (!m) return;
   const uid = S.session.user.id;
   const title = ($("#f-title")?.value || "").trim();
   if (!title) { $("#f-title").focus(); return; }
-  if (m.type === "event") {
+  if (m.type === "goal") {
+    const pr = Math.max(0, Math.min(100, parseInt($("#f-progress").value) || 0));
+    const row = {
+      title,
+      target_date: $("#f-target").value || null,
+      description: ($("#f-notes").value || "").trim() || null,
+      progress: pr,
+      status: pr >= 100 ? "done" : "active",
+    };
+    if (m.data.id) await sb.from("goals").update(row).eq("id", m.data.id);
+    else await sb.from("goals").insert({ ...row, user_id: uid });
+  } else if (m.type === "event") {
     const row = {
       title,
       date: $("#f-date").value || fmtDate(new Date()),
@@ -1099,8 +1187,10 @@ async function saveModal() {
 }
 async function deleteModal() {
   const m = S.modal; if (!m || !m.data.id) return;
-  if (!confirm(m.type === "event" ? "Удалить это событие?" : "Удалить эту задачу?")) return;
-  await sb.from(m.type === "event" ? "events" : "tasks").delete().eq("id", m.data.id);
+  const label = m.type === "event" ? "Удалить это событие?" : m.type === "task" ? "Удалить эту задачу?" : "Удалить эту цель? Связанные задачи останутся.";
+  if (!confirm(label)) return;
+  const table = m.type === "event" ? "events" : m.type === "task" ? "tasks" : "goals";
+  await sb.from(table).delete().eq("id", m.data.id);
   S.modal = null;
   await loadAll();
   render();
@@ -1174,7 +1264,7 @@ function bindMain() {
     render();
   }));
   // Свайп влево/вправо по сетке дня = следующий/предыдущий день (мобильная «Неделя»)
-  const tgs = $(".tg-scroll");
+  const tgs = $(".tg-day-wrap");
   if (tgs && S.view==="calendar" && S.calMode==="week" && !isDesktop()) {
     let sx=0, sy=0;
     tgs.addEventListener("touchstart",(e)=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
@@ -1190,6 +1280,18 @@ function bindMain() {
   }));
   $$("[data-newev]").forEach((b)=>(b.onclick=()=>openEvent(null)));
   $$("[data-newtask]").forEach((b)=>(b.onclick=()=>openTask(null)));
+  $$("[data-newgoal]").forEach((b)=>(b.onclick=()=>openGoal(null)));
+  $$("[data-goal]").forEach((el)=>(el.onclick=()=>{
+    const g = S.goals.find((x)=>x.id===el.dataset.goal);
+    if (g) openGoal({ ...g });
+  }));
+  const tp = $("[data-testpush]");
+  if (tp) tp.onclick = async () => {
+    tp.textContent = "Отправляю…";
+    const { data, error } = await sb.functions.invoke("push-send", { body: { test: true } });
+    tp.textContent = "Отправить тестовый push";
+    alert(error ? "Ошибка: " + error.message : (data?.error ? data.error : "Отправлено! Проверьте шторку уведомлений (может занять пару секунд)."));
+  };
   $$("[data-edittask]").forEach((el)=>(el.onclick=()=>{
     const t = S.tasks.find((x)=>x.id===el.dataset.edittask);
     if (t) openTask({ ...t });
