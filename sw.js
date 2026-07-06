@@ -1,5 +1,5 @@
 // LifeOS Service Worker v3 — push-уведомления + безопасное кэширование (сеть всегда в приоритете)
-const CACHE = "lifeos-v6";
+const CACHE = "lifeos-v7";
 
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => {

@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<script>try{var __t=localStorage.getItem("lifeos-theme");if(__t&&__t!=="system")document.documentElement.setAttribute("data-theme",__t);}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>LifeOS</title>
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
@@ -40,6 +41,31 @@
     --glass-border: rgba(255,255,255,.14); --glass-hi: rgba(255,255,255,.12);
     --glass-shadow: 0 8px 32px rgba(0,0,0,.55);
   }
+}
+/* Ручное переключение темы (сильнее media-запроса за счёт селектора html[attr]) */
+html[data-theme="dark"] {
+  --bg: #000000; --card: #1C1C1E; --card2: rgba(28,28,30,.72);
+  --text: #FFFFFF; --text2: #98989F; --text3: #48484A;
+  --sep: rgba(84,84,88,.35); --sep2: rgba(84,84,88,.65);
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --blur-bg: rgba(10,10,10,.8);
+  --bubble-ai: #262628; --fill: rgba(120,120,128,.22); --fill2: rgba(120,120,128,.34);
+  --glass: rgba(26,26,30,.45); --glass-strong: rgba(36,36,40,.62);
+  --glass-border: rgba(255,255,255,.14); --glass-hi: rgba(255,255,255,.12);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,.55);
+}
+html[data-theme="light"] {
+  --bg: #F2F2F7; --card: #FFFFFF; --card2: rgba(255,255,255,.72);
+  --text: #1C1C1E; --text2: #8A8A8E; --text3: #C5C5C7;
+  --sep: rgba(60,60,67,.08); --sep2: rgba(60,60,67,.16);
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --blur-bg: rgba(242,242,247,.82);
+  --bubble-ai: #FFFFFF; --fill: rgba(120,120,128,.1); --fill2: rgba(120,120,128,.2);
+  --glass: rgba(255,255,255,.38); --glass-strong: rgba(255,255,255,.6);
+  --glass-border: rgba(255,255,255,.65); --glass-hi: rgba(255,255,255,.55);
+  --glass-shadow: 0 8px 32px rgba(31,38,60,.14);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
@@ -421,12 +447,29 @@ const S = {
   micOn: false, noteMicOn: false, speaking: false, notifOn: localStorage.getItem("lifeos-notif") === "1",
   modal: null, memTab: "facts",
   name: localStorage.getItem("lifeos-name") || "",
+  theme: localStorage.getItem("lifeos-theme") || "system",
+  aiVoice: localStorage.getItem("lifeos-ai-voice") === "1",
+  pushDeviceCount: null,
 };
 function mondayOf(d) {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   x.setDate(x.getDate() - ((x.getDay()+6)%7));
   return x;
 }
+
+/* ====== Тема оформления ====== */
+function syncThemeColorMeta(color) {
+  let m = document.getElementById("dynamic-theme-color");
+  if (!color) { if (m) m.remove(); return; }
+  if (!m) { m = document.createElement("meta"); m.id = "dynamic-theme-color"; m.name = "theme-color"; document.head.appendChild(m); }
+  m.content = color;
+}
+function applyTheme() {
+  if (S.theme === "system") { document.documentElement.removeAttribute("data-theme"); syncThemeColorMeta(null); }
+  else { document.documentElement.setAttribute("data-theme", S.theme); syncThemeColorMeta(S.theme === "dark" ? "#000000" : "#F2F2F7"); }
+}
+function setTheme(t) { S.theme = t; localStorage.setItem("lifeos-theme", t); applyTheme(); }
+applyTheme();
 
 /* ====== Данные ====== */
 const cacheKey = () => "lifeos-data-" + (S.session?.user?.id || "anon");
@@ -493,7 +536,7 @@ actions (используй ровно эти поля):
 {"type":"create_habit","title":"","target_per_week":1-7} | {"type":"log_habit","id":""} (отметить привычку выполненной сегодня; id "NEW" если создана только что) | {"type":"delete_habit","id":""}
 {"type":"create_note","content":""} (для мыслей/идей без чёткого действия — сохрани текст как есть)
 
-Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) «Вечером» = 18:00–21:00, «утром» = 8:00–11:00, если сказано «в 6 вечера» — это 18:00. 5) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 6) Если пользователь формулирует цель («хочу…», «моя цель…», «планирую добиться…») — создай create_goal и СРАЗУ декомпозируй её на 3–6 конкретных задач create_task с "goal_id":"NEW" и разумными сроками до target_date. 7) Если пользователь описывает регулярную привычку («хочу бегать 3 раза в неделю», «буду медитировать каждый день») — создай create_habit. Если сообщает о выполнении сегодня («я побегал», «сходил в зал») — найди подходящую привычку по названию из списка ПРИВЫЧКИ и создай log_habit с её id; если такой привычки ещё нет — сначала create_habit, затем log_habit с id "NEW". 8) Если сообщение — просто мысль/идея без чёткого действия, сохрани её через create_note дословно. 9) reply — 1–3 коротких предложения.`;
+Правила: 1) Удаление — только после явного подтверждения пользователя (до этого actions пустой, задай вопрос). 2) Не хватает даты/времени — один уточняющий вопрос. 3) Пересечение по времени — предупреди. 4) «Вечером» = 18:00–21:00, «утром» = 8:00–11:00, если сказано «в 6 вечера» — это 18:00. 5) Новые устойчивые факты о пользователе сохраняй в память, без дублей. 6) Если пользователь формулирует цель («хочу…», «моя цель…», «планирую добиться…») — создай create_goal и СРАЗУ декомпозируй её на 3–6 конкретных задач create_task с "goal_id":"NEW" и разумными сроками до target_date. 7) Если пользователь описывает регулярную привычку («хочу бегать 3 раза в неделю», «буду медитировать каждый день») — создай create_habit. Если сообщает о выполнении сегодня («я побегал», «сходил в зал») — найди подходящую привычку по названию из списка ПРИВЫЧКИ и создай log_habit с её id; если такой привычки ещё нет — сначала create_habit, затем log_habit с id "NEW". 8) Если сообщение — просто мысль/идея без чёткого действия, сохрани её через create_note дословно. 9) Будь проактивным: если новая задача/событие противоречит уже плотному расписанию дня или срокам другой активной цели — прямо укажи на это в reply и спроси, что важнее, а не создавай молча. 10) reply — 1–3 коротких предложения.`;
 }
 
 async function applyActions(actions) {
@@ -609,6 +652,99 @@ async function sendMsg(text) {
     S.chat.push({ role:"ai", text: "Не получилось: " + (e?.message || "ошибка сети") + ". Попробуйте ещё раз.", chips: [] });
   }
   saveChat(); S.aiBusy = false; render();
+}
+
+/* ====== Настройки ====== */
+async function openSettings() {
+  S.modal = { type: "settings", data: {} };
+  render();
+  try {
+    const { count } = await sb.from("push_subscriptions").select("*", { count: "exact", head: true }).eq("user_id", S.session.user.id);
+    S.pushDeviceCount = count ?? null;
+  } catch { S.pushDeviceCount = null; }
+  render();
+}
+
+/* ====== Экспорт / импорт календаря (.ics) ====== */
+function icsEscape(s) { return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
+function exportIcs() {
+  let ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//LifeOS//RU\r\n";
+  for (const e of S.events) {
+    const d = parseDate(e.date);
+    const dPart = fmtDate(d).replace(/-/g, "");
+    let dtstart, dtend, allday = !e.time;
+    if (!allday) {
+      const [hh, mm] = e.time.split(":").map(Number);
+      dtstart = `${dPart}T${pad(hh)}${pad(mm)}00`;
+      const endD = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm + (e.duration_min || 60));
+      dtend = `${fmtDate(endD).replace(/-/g, "")}T${pad(endD.getHours())}${pad(endD.getMinutes())}00`;
+    } else {
+      dtstart = dPart;
+      dtend = fmtDate(new Date(d.getTime() + 864e5)).replace(/-/g, "");
+    }
+    ics += "BEGIN:VEVENT\r\n";
+    ics += `UID:${e.id}@lifeos\r\n`;
+    ics += `DTSTAMP:${fmtDate(new Date()).replace(/-/g, "")}T000000Z\r\n`;
+    ics += allday ? `DTSTART;VALUE=DATE:${dtstart}\r\nDTEND;VALUE=DATE:${dtend}\r\n` : `DTSTART:${dtstart}\r\nDTEND:${dtend}\r\n`;
+    ics += `SUMMARY:${icsEscape(e.title)}\r\n`;
+    if (e.location) ics += `LOCATION:${icsEscape(e.location)}\r\n`;
+    if (e.notes) ics += `DESCRIPTION:${icsEscape(e.notes)}\r\n`;
+    ics += "END:VEVENT\r\n";
+  }
+  ics += "END:VCALENDAR\r\n";
+  const blob = new Blob([ics], { type: "text/calendar" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "lifeos.ics"; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function unfoldIcs(text) { return text.replace(/\r\n[ \t]/g, "").replace(/\n[ \t]/g, ""); }
+function parseIcsDate(v) {
+  const m = v.match(/(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2}))?/);
+  if (!m) return null;
+  return { date: `${m[1]}-${m[2]}-${m[3]}`, time: m[4] ? `${m[5]}:${m[6]}` : null };
+}
+const icsUnescape = (s) => String(s).replace(/\\n/g, "\n").replace(/\\,/g, ",").replace(/\\;/g, ";");
+async function importIcsFile(file) {
+  if (!file) return;
+  const text = unfoldIcs(await file.text());
+  const blocks = text.split("BEGIN:VEVENT").slice(1);
+  if (!blocks.length) { alert("В файле не найдено событий."); return; }
+  const uid = S.session.user.id;
+  let count = 0;
+  for (const block of blocks) {
+    const body = block.split("END:VEVENT")[0];
+    const lines = body.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const get = (key) => {
+      const line = lines.find((l) => l.startsWith(key + ":") || l.startsWith(key + ";"));
+      return line ? line.slice(line.indexOf(":") + 1) : null;
+    };
+    const summary = get("SUMMARY");
+    const dtstartRaw = get("DTSTART");
+    if (!summary || !dtstartRaw) continue;
+    const start = parseIcsDate(dtstartRaw);
+    if (!start) continue;
+    let duration_min = null;
+    const dtendRaw = get("DTEND");
+    if (dtendRaw && start.time) {
+      const end = parseIcsDate(dtendRaw);
+      if (end?.time) {
+        const [sh, sm] = start.time.split(":").map(Number);
+        const [eh, em] = end.time.split(":").map(Number);
+        duration_min = Math.max(5, (eh * 60 + em) - (sh * 60 + sm));
+      }
+    }
+    const location = get("LOCATION"); const description = get("DESCRIPTION");
+    const { error } = await sb.from("events").insert({
+      user_id: uid, title: icsUnescape(summary),
+      date: start.date, time: start.time, duration_min,
+      location: location ? icsUnescape(location) : null,
+      notes: description ? icsUnescape(description) : null,
+    });
+    if (!error) count++;
+  }
+  alert(count ? `Импортировано событий: ${count}` : "Не удалось разобрать события в файле.");
+  await loadAll(true);
 }
 
 /* ====== Голос ====== */
@@ -791,7 +927,7 @@ function render() {
     <div class="main">
       <div class="header">
         <div><h1>${title}</h1>${S.view==="chat" ? '<div class="sub">Скажите или напишите — он сделает</div>' : ""}${S.view==="memory" ? (S.memTab==="notes" ? '<div class="sub">Быстрые заметки и идеи</div>' : '<div class="sub">Что LifeOS знает о вас</div>') : ""}</div>
-        <button class="hbtn" data-signout>Выйти</button>
+        <div style="display:flex;gap:6px;flex-shrink:0"><button class="hbtn" data-settings>⚙️</button><button class="hbtn" data-signout>Выйти</button></div>
       </div>
       <div class="content fade-in" id="content">${renderView()}</div>
       ${S.view==="chat" ? `
@@ -832,9 +968,7 @@ function renderView() {
 
 /* --- Голосовой брифинг --- */
 const stripHtml = (s) => String(s).replace(/<[^>]+>/g, "");
-function toggleBriefing() {
-  if (!("speechSynthesis" in window)) { alert("Голосовой брифинг не поддерживается этим браузером."); return; }
-  if (S.speaking) { speechSynthesis.cancel(); S.speaking = false; render(); return; }
+function buildBriefingText() {
   const n = new Date(); const today = fmtDate(n);
   const todayEv = S.events.filter((e) => e.date===today).sort((a,b) => (a.time||"99")<(b.time||"99")?-1:1);
   const dueToday = S.tasks.filter((t) => !t.done && t.due_date===today);
@@ -846,16 +980,51 @@ function toggleBriefing() {
   } else text += "Сегодня расписание свободно. ";
   if (dueToday.length) text += "Задач на сегодня: " + dueToday.length + ". ";
   if (recs.length) text += stripHtml(recs[0].t) + ". ";
+  return text;
+}
+function speakSystem(text) {
+  if (!("speechSynthesis" in window)) { alert("Голосовой брифинг не поддерживается этим браузером."); return; }
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "ru-RU";
   try {
-    const ru = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith("ru"));
-    if (ru) u.voice = ru;
+    const voices = speechSynthesis.getVoices();
+    const enhanced = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ru") && /enhanced|premium|neural|улучш/i.test(v.name));
+    const anyRu = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ru"));
+    if (enhanced) u.voice = enhanced; else if (anyRu) u.voice = anyRu;
   } catch {}
   u.onend = () => { S.speaking = false; render(); };
   u.onerror = () => { S.speaking = false; render(); };
   S.speaking = true; render();
   speechSynthesis.speak(u);
+}
+let currentAudio = null;
+async function toggleBriefing() {
+  if (S.speaking) {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    S.speaking = false; render();
+    return;
+  }
+  const text = buildBriefingText();
+  if (S.aiVoice) {
+    S.speaking = true; render();
+    try {
+      const { data, error } = await sb.functions.invoke("ai-tts", { body: { text } });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const audio = new Audio("data:audio/mp3;base64," + data.audioBase64);
+      currentAudio = audio;
+      audio.onended = () => { S.speaking = false; currentAudio = null; render(); };
+      audio.onerror = () => { S.speaking = false; currentAudio = null; render(); };
+      await audio.play();
+    } catch (e) {
+      S.speaking = false; render();
+      alert("Голос ИИ недоступен: " + (e?.message || "ошибка") + ". Включаю системный голос.");
+      speakSystem(text);
+    }
+    return;
+  }
+  speakSystem(text);
 }
 
 /* --- Приветствие с именем --- */
@@ -899,6 +1068,9 @@ function buildRecs() {
   if (upcoming) recs.push({ ic:IC.clock, c:"#0A84FF", t:`Ближайшее: <b>${esc(upcoming.title)}</b> в ${hm(upcoming.time)}${upcoming.location ? " · " + esc(upcoming.location) : ""}` });
   const overdue = S.tasks.filter((t) => !t.done && t.due_date && t.due_date < today);
   if (overdue.length) recs.push({ ic:IC.warn, c:"#FF3B30", t:`Просрочено ${overdue.length}: начните с «${esc(overdue[0].title)}»` });
+  const todayBusy = S.events.filter((e) => e.date===today && e.time);
+  const totalBusyMin = todayBusy.reduce((s2,e) => s2+(e.duration_min||60), 0);
+  if (todayBusy.length >= 5 || totalBusyMin >= 360) recs.push({ ic:IC.warn, c:"#FF9500", t:`Плотный день: ${todayBusy.length} событий, ~${Math.round(totalBusyMin/60)} ч встреч. Возможно, стоит что-то перенести.` });
   const hi = S.tasks.filter((t) => !t.done && t.priority === "high" && (!t.due_date || t.due_date >= today));
   if (hi.length) recs.push({ ic:IC.bolt, c:"#FF9500", t:`Важное: <b>${esc(hi[0].title)}</b>${hi[0].due_date ? " — до " + humanDate(hi[0].due_date) : ""}` });
   const win = findFreeWindowToday();
@@ -958,17 +1130,10 @@ function viewDash() {
     </div>
     <div class="card">
       <h3>Прогресс за неделю</h3>
-      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);font-weight:600;margin-bottom:8px"><span>Выполнено ${doneWeek} из ${totalWeek}</span><span>${pct}%</span></div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);font-weight:600;margin-bottom:4px"><span>Выполнено ${doneWeek} из ${totalWeek}</span><span>${pct}%</span></div>
+      ${weeklyBarSvg()}
     </div>
-    <div class="card">
-      <div class="notif-row">
-        <div><div class="txt">Push-уведомления</div><div class="st">Напоминания за 10 мин и сводка в 8:00 — даже когда LifeOS закрыт</div></div>
-        <label class="switch"><input type="checkbox" id="notif" ${S.notifOn?"checked":""}><span class="knob"></span></label>
-      </div>
-      ${S.notifOn ? '<button class="hbtn" data-testpush style="margin-top:12px">Отправить тестовый push</button>' : ""}
-    </div>
-    <div style="text-align:center;color:var(--text3);font-size:11px;font-weight:600;margin:2px 0 10px">LifeOS v5.0 · Liquid Glass</div>
+    <div style="text-align:center;color:var(--text3);font-size:11px;font-weight:600;margin:2px 0 10px">LifeOS v6.0 · Liquid Glass</div>
     <button class="plan-btn" data-plan>${IC.spark.replace('class="nic"','class="nic" style="width:18px;height:18px"')} Спланируй мой день</button>`;
 }
 
@@ -997,6 +1162,34 @@ function habitsCardHtml() {
   </div>`;
 }
 
+/* --- Диаграммы (SVG, без внешних библиотек) --- */
+function svgRing(pct, size, color) {
+  const r = (size/2) - 4.5; const c = 2*Math.PI*r; const off = c * (1 - Math.max(0,Math.min(100,pct))/100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg);flex-shrink:0">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--fill)" stroke-width="5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+  </svg>`;
+}
+function weeklyBarSvg() {
+  const days = [];
+  for (let i=6;i>=0;i--) days.push(fmtDate(new Date(Date.now()-i*864e5)));
+  const counts = days.map((d) => S.tasks.filter((t) => t.done && (t.updated_at||"").slice(0,10)===d).length);
+  const max = Math.max(1, ...counts);
+  const W=290, H=92, bw=27, gap=(W-7*bw)/8;
+  const todayStr = fmtDate(new Date());
+  let bars = "";
+  days.forEach((d,i) => {
+    const barH = Math.max(3, Math.round(counts[i]/max*58));
+    const x = gap + i*(bw+gap);
+    const y = H-22-barH;
+    const isToday = d===todayStr;
+    bars += `<rect x="${x.toFixed(1)}" y="${y}" width="${bw}" height="${barH}" rx="6" fill="${isToday ? "#0A84FF" : "var(--fill2)"}"/>`;
+    bars += `<text x="${(x+bw/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--text2)" font-weight="600">${WD[(parseDate(d).getDay()+6)%7]}</text>`;
+    if (counts[i] > 0) bars += `<text x="${(x+bw/2).toFixed(1)}" y="${y-5}" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text)">${counts[i]}</text>`;
+  });
+  return `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${bars}</svg>`;
+}
+
 /* --- Цели --- */
 function goalProgress(g) {
   const linked = S.tasks.filter((t) => t.goal_id === g.id);
@@ -1010,13 +1203,15 @@ function goalsCardHtml() {
     <h3 style="display:flex;justify-content:space-between;align-items:center">Цели <button class="hbtn" data-newgoal style="text-transform:none;letter-spacing:0">＋ Цель</button></h3>
     ${active.length ? active.map((g) => {
       const p = goalProgress(g);
-      return `<div class="goal-row" data-goal="${g.id}">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
-          <div class="gt">🎯 ${esc(g.title)}</div>
-          <div class="gm">${p.pct}%</div>
+      return `<div class="goal-row" data-goal="${g.id}" style="display:flex;align-items:center;gap:13px">
+        <div style="position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          ${svgRing(p.pct, 52, "#0A84FF")}
+          <div style="position:absolute;font-size:12.5px;font-weight:800">${p.pct}%</div>
         </div>
-        <div class="progress-track" style="margin-top:7px"><div class="progress-fill" style="width:${p.pct}%"></div></div>
-        <div class="gm" style="margin-top:5px">${p.label}${g.target_date ? (p.label ? " · " : "") + "к " + humanDate(g.target_date) : ""}</div>
+        <div style="flex:1;min-width:0">
+          <div class="gt">🎯 ${esc(g.title)}</div>
+          <div class="gm">${p.label}${g.target_date ? (p.label ? " · " : "") + "к " + humanDate(g.target_date) : ""}</div>
+        </div>
       </div>`;
     }).join("") : '<div class="empty">Скажите ассистенту: «моя цель — …» — он составит план из задач.</div>'}
   </div>`;
@@ -1260,6 +1455,48 @@ function viewNotes() {
 /* --- Шторка редактирования --- */
 function renderModal() {
   const m = S.modal;
+  if (m.type === "settings") {
+    return `
+    <div class="overlay" id="overlay">
+      <div class="sheet" id="sheet">
+        <h2>Настройки</h2>
+        <div class="frow"><label>Имя</label>
+          <div class="name-row"><input class="finput" id="s-name" value="${esc(S.name||"")}" placeholder="Как к вам обращаться?" maxlength="30"><button id="s-savename">Сохранить</button></div>
+        </div>
+        <div class="frow"><label>Тема оформления</label>
+          <div class="seg" style="width:100%">
+            <button data-theme-set="light" class="${S.theme==="light"?"on":""}" style="flex:1">Светлая</button>
+            <button data-theme-set="dark" class="${S.theme==="dark"?"on":""}" style="flex:1">Тёмная</button>
+            <button data-theme-set="system" class="${S.theme==="system"?"on":""}" style="flex:1">Системная</button>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="notif-row">
+            <div><div class="txt">Push-уведомления</div><div class="st">Напоминания, сводки и остроумные пинки — даже когда LifeOS закрыт</div></div>
+            <label class="switch"><input type="checkbox" id="notif" ${S.notifOn?"checked":""}><span class="knob"></span></label>
+          </div>
+          ${S.notifOn ? `<button class="hbtn" data-testpush style="margin-top:10px;width:100%;text-align:center">Отправить тестовый push</button>${S.pushDeviceCount!=null ? `<div class="c" style="margin-top:8px">Включено на устройствах: ${S.pushDeviceCount}</div>` : ""}` : ""}
+        </div>
+        <div class="frow">
+          <div class="notif-row">
+            <div><div class="txt">Голос ИИ для брифинга</div><div class="st">Естественнее системного, но платно за символы. Иначе — бесплатный голос устройства.</div></div>
+            <label class="switch"><input type="checkbox" id="aivoice" ${S.aiVoice?"checked":""}><span class="knob"></span></label>
+          </div>
+        </div>
+        <div class="frow"><label>Календарь</label>
+          <div style="display:flex;gap:8px">
+            <button class="hbtn" id="s-export" style="flex:1;text-align:center">Экспорт .ics</button>
+            <button class="hbtn" id="s-import" style="flex:1;text-align:center">Импорт .ics</button>
+          </div>
+          <input type="file" id="s-icsfile" accept=".ics" style="display:none">
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="m-cancel">Готово</button>
+        </div>
+        <div style="text-align:center;color:var(--text3);font-size:11px;margin-top:10px">LifeOS v6.0</div>
+      </div>
+    </div>`;
+  }
   if (m.type === "event") {
     const e = m.data;
     return `
@@ -1452,6 +1689,20 @@ function bindMain() {
   const mic = $("#mic"); if (mic) mic.onclick = toggleMic;
   $$("[data-suggest]").forEach((b)=>(b.onclick=()=>sendMsg(b.dataset.suggest)));
   const plan = $("[data-plan]"); if (plan) plan.onclick = () => { S.view="chat"; render(); sendMsg("Спланируй мой день с учётом моих событий и задач"); };
+  const settingsBtn = $("[data-settings]"); if (settingsBtn) settingsBtn.onclick = () => openSettings();
+  $$("[data-theme-set]").forEach((b)=>(b.onclick=()=>{ setTheme(b.dataset.themeSet); render(); }));
+  const ssn = $("#s-savename");
+  if (ssn) ssn.onclick = async () => {
+    const v = ($("#s-name").value || "").trim();
+    if (!v) return;
+    S.name = v; localStorage.setItem("lifeos-name", v);
+    try { await sb.auth.updateUser({ data: { name: v } }); } catch {}
+    render();
+  };
+  const av = $("#aivoice"); if (av) av.onchange = () => { S.aiVoice = av.checked; localStorage.setItem("lifeos-ai-voice", S.aiVoice?"1":"0"); };
+  const sexp = $("#s-export"); if (sexp) sexp.onclick = () => exportIcs();
+  const simp = $("#s-import"); const sfile = $("#s-icsfile");
+  if (simp && sfile) { simp.onclick = () => sfile.click(); sfile.onchange = () => importIcsFile(sfile.files[0]); }
   const br = $("[data-briefing]"); if (br) br.onclick = () => toggleBriefing();
   const wr = $("[data-weekreview]"); if (wr) wr.onclick = () => { S.view="chat"; render(); sendMsg("Сделай разбор моей прошедшей недели: что получилось, что нет, дай честный совет и предложи, на что обратить внимание на следующей неделе."); };
   const nt = $("#notif"); if (nt) nt.onchange = () => toggleNotif(nt.checked);
@@ -1557,8 +1808,8 @@ function bindMain() {
   const ov = $("#overlay");
   if (ov) {
     ov.onclick = (e) => { if (e.target === ov) { S.modal = null; render(); } };
-    $("#m-save").onclick = saveModal;
-    $("#m-cancel").onclick = () => { S.modal = null; render(); };
+    const sv = $("#m-save"); if (sv) sv.onclick = saveModal;
+    const cn = $("#m-cancel"); if (cn) cn.onclick = () => { S.modal = null; render(); };
     const del = $("#m-del"); if (del) del.onclick = deleteModal;
   }
 }
